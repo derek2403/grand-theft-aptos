@@ -9,7 +9,21 @@ export function CreateCharacterModal({
   showModal, 
   onClose, 
   onSubmit, 
-  characterForm, 
+  characterForm = {
+    name: '',
+    occupation: '',
+    mbti: '',
+    hobby: '',
+    gender: '',
+    characteristics: ['', '', '', '', ''],
+    goals: ['', '', ''],
+    needs: {
+      hunger: 50,
+      energy: 70,
+      social: 30,
+      happiness: 80
+    }
+  }, 
   setCharacterForm 
 }) {
   const [twitterHandle, setTwitterHandle] = useState('')
@@ -64,7 +78,7 @@ export function CreateCharacterModal({
     }
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     if (!characterForm.name || !characterForm.occupation || 
         !characterForm.mbti || !characterForm.hobby || 

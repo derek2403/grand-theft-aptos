@@ -32,7 +32,7 @@ function Dialog({ text }) {
 export function Girl({ character }) {
   const [model, setModel] = useState(null)
   const [animationsLoaded, setAnimationsLoaded] = useState({})
-  const texture = useTexture('/mwoen/shaded.png')
+  const texture = useTexture('/women/shaded.png')
   const modelRef = useRef()
   const mixerRef = useRef()
   const spotlightRef = useRef()

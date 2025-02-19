@@ -17,7 +17,6 @@ const validateTalkToActions = (allCharacterActions) => {
       targetedCharacters.add(action.targetName)
     }
   }
-  
   return true
 }
 
