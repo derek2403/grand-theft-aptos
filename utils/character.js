@@ -246,187 +246,109 @@ const getRandomCheckpoint = (currentCheckpoint) => {
 }
 
 // Wander around function
-export const wanderAround = (character, controller) => {
-  let currentDestination = null
-  let moveTimer = 0
-  const WAIT_TIME = 3000 // 3 seconds between movements
-  let currentCheckpoint = null
+export function wanderAround(characterId, options = {}) {
+  const {
+    speed = 2,
+    range = 10,
+    playAnimation
+  } = options;
 
-  const movement = {
+  let targetX = Math.random() * range * 2 - range;
+  let targetZ = Math.random() * range * 2 - range;
+  
+  console.log(`${characterId} wandering to:`, targetX, targetZ);
+
+  return {
     update: (model, delta) => {
-      if (!model) return false
+      if (!model) return false;
 
-      // If waiting between movements
-      if (moveTimer > 0) {
-        moveTimer -= delta * 1000
-        return false
+      const dx = targetX - model.position.x;
+      const dz = targetZ - model.position.z;
+      const distance = Math.sqrt(dx * dx + dz * dz);
+
+      if (distance < 0.1) {
+        // Generate new target when reached
+        targetX = Math.random() * range * 2 - range;
+        targetZ = Math.random() * range * 2 - range;
+        return false;
       }
 
-      // If no current destination or reached destination, pick new one
-      if (!currentDestination) {
-        const newCheckpoint = getRandomCheckpoint(currentCheckpoint)
-        const newDestination = goto(character, newCheckpoint, controller)
-        if (newDestination) {
-          currentDestination = newDestination
-          currentCheckpoint = newCheckpoint
-        }
-        return false
+      // Move towards target
+      const moveX = (dx / distance) * speed * delta;
+      const moveZ = (dz / distance) * speed * delta;
+
+      model.position.x += moveX;
+      model.position.z += moveZ;
+
+      // Update rotation to face movement direction
+      const angle = Math.atan2(dx, dz);
+      model.rotation.y = angle;
+
+      // Play running animation
+      if (playAnimation) {
+        playAnimation('Run');
       }
 
-      // Update current movement
-      const reachedDestination = currentDestination.update(model, delta)
-      
-      if (reachedDestination) {
-        // Reset destination and start timer
-        currentDestination = null
-        moveTimer = WAIT_TIME
-        // Play idle animation
-        if (controller?.playAnimation) {
-          controller.playAnimation('Happy')
-        }
-      }
-
-      return false
+      return false;
     }
-  }
-
-  return movement
+  };
 }
 
 // Talk to another character
-export const talkTo = (character1, character2, controller1, controller2) => {
-  const talkingArea = getRandomTalkingArea()
-  let phase = 'moving'
-  let char1Movement = null
-  let char2Movement = null
+export function talkTo(char1Id, char2Id, char1, char2) {
+  if (!char1 || !char2) return null;
   
-  // Create offset positions for the characters (1 unit apart)
-  const OFFSET_DISTANCE = 1.0
-  const char1Target = {
-    x: talkingArea.x - OFFSET_DISTANCE/2,
-    z: talkingArea.z
-  }
+  const char2Position = char2.ref?.current?.position;
+  if (!char2Position) return null;
+
   const char2Target = {
-    x: talkingArea.x + OFFSET_DISTANCE/2,
-    z: talkingArea.z
-  }
+    x: char2Position.x,
+    z: char2Position.z
+  };
 
-  const interaction = {
-    update: (model1, model2, delta) => {
-      if (!model1 || !model2) return false
-
-      switch (phase) {
-        case 'moving':
-          // Initialize movements if not already done
-          if (!char1Movement) {
-            const movement = {
-              update: (model, delta) => {
-                if (!model) return false
-                
-                const dx = model.position.x - char1Target.x
-                const dz = model.position.z - char1Target.z
-                const distance = Math.sqrt(dx * dx + dz * dz)
-                
-                if (distance < 0.1) {
-                  model.position.x = char1Target.x
-                  model.position.z = char1Target.z
-                  return true
-                }
-                
-                const direction = new THREE.Vector3(
-                  char1Target.x - model.position.x,
-                  0,
-                  char1Target.z - model.position.z
-                ).normalize()
-                
-                const moveAmount = 0.1 * delta * 60
-                const movement = direction.multiplyScalar(moveAmount)
-                const newPosition = model.position.clone().add(movement)
-                
-                if (!checkWallCollision(newPosition)) {
-                  model.position.copy(newPosition)
-                  model.rotation.y = Math.atan2(direction.x, direction.z)
-                }
-                
-                return false
-              }
-            }
-            controller1?.playAnimation('Run')
-            char1Movement = movement
-          }
-          
-          if (!char2Movement) {
-            const movement = {
-              update: (model, delta) => {
-                if (!model) return false
-                
-                const dx = model.position.x - char2Target.x
-                const dz = model.position.z - char2Target.z
-                const distance = Math.sqrt(dx * dx + dz * dz)
-                
-                if (distance < 0.1) {
-                  model.position.x = char2Target.x
-                  model.position.z = char2Target.z
-                  return true
-                }
-                
-                const direction = new THREE.Vector3(
-                  char2Target.x - model.position.x,
-                  0,
-                  char2Target.z - model.position.z
-                ).normalize()
-                
-                const moveAmount = 0.1 * delta * 60
-                const movement = direction.multiplyScalar(moveAmount)
-                const newPosition = model.position.clone().add(movement)
-                
-                if (!checkWallCollision(newPosition)) {
-                  model.position.copy(newPosition)
-                  model.rotation.y = Math.atan2(direction.x, direction.z)
-                }
-                
-                return false
-              }
-            }
-            controller2?.playAnimation('Run')
-            char2Movement = movement
-          }
-
-          // Make sure both movements were initialized
-          if (!char1Movement || !char2Movement) return false
-
-          // Update movements
-          const char1Done = char1Movement.update(model1, delta)
-          const char2Done = char2Movement.update(model2, delta)
-
-          // If both characters reached their positions
-          if (char1Done && char2Done) {
-            phase = 'talking'
-            
-            // Face each other
-            const angle = Math.atan2(
-              model2.position.x - model1.position.x,
-              model2.position.z - model1.position.z
-            )
-            model1.rotation.y = angle
-            model2.rotation.y = angle + Math.PI
-
-            // Stop running animations first
-            controller1?.playAnimation('Talking')
-            controller2?.playAnimation('Talking')
-          }
-          break
-
-        case 'talking':
-          // Ensure both characters are in talking animation
-          controller1?.playAnimation('Talking')
-          controller2?.playAnimation('Talking')
-          return true
+  let isMoving = true;
+  let isInteracting = false;
+  
+  return {
+    update: (model, delta) => {
+      if (!model) return false;
+      
+      const dx = model.position.x - char2Target.x;
+      const dz = model.position.z - char2Target.z;
+      const distance = Math.sqrt(dx * dx + dz * dz);
+      
+      // If close enough, start interaction
+      if (distance < 2) {
+        isMoving = false;
+        if (!isInteracting) {
+          isInteracting = true;
+          // Start conversation
+          gameState.startConversation(char1.name, char2.name);
+          // Play talking animation for both characters
+          char1.playAnimation('Talking');
+          char2.playAnimation('Talking');
+        }
+        return false;
       }
-
-      return false
+      
+      if (isMoving) {
+        // Move towards target
+        const speed = 2;
+        const moveX = (dx / distance) * speed * delta;
+        const moveZ = (dz / distance) * speed * delta;
+        
+        model.position.x -= moveX;
+        model.position.z -= moveZ;
+        
+        // Update rotation to face target
+        const angle = Math.atan2(dx, dz);
+        model.rotation.y = angle + Math.PI;
+        
+        // Play running animation
+        char1.playAnimation('Run');
+      }
+      
+      return false;
     }
-  }
-
-  return interaction
+  };
 } 

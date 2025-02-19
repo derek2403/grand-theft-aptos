@@ -1,154 +1,154 @@
 {
-    "characters": [
-      {
-        "name": "Alex Thompson",
-        "occupation": "Software Engineer",
-        "mbti": "INTJ",
-        "age": 28,
-        "hobby": "Chess",
-        "gender": "male",
-        "characteristics": [
-          "Analytical",
-          "Problem-solver",
-          "Reserved",
-          "Strategic",
-          "Innovative"
-        ]
-      },
-      {
-        "name": "Emma Rodriguez",
-        "occupation": "Artist",
-        "mbti": "ENFP",
-        "age": 25,
-        "hobby": "Painting",
-        "gender": "female",
-        "characteristics": [
-          "Creative",
-          "Enthusiastic",
-          "Free-spirited",
-          "Empathetic",
-          "Spontaneous"
-        ]
-      },
-      {
-        "name": "James Chen",
-        "occupation": "Chef",
-        "mbti": "ISFJ",
-        "age": 32,
-        "hobby": "Gardening",
-        "gender": "male",
-        "characteristics": [
-          "Patient",
-          "Detail-oriented",
-          "Caring",
-          "Traditional",
-          "Reliable"
-        ]
-      },
-      {
-        "name": "Sarah Mitchell",
-        "occupation": "Teacher",
-        "mbti": "ENFJ",
-        "age": 29,
-        "hobby": "Reading",
-        "gender": "female",
-        "characteristics": [
-          "Charismatic",
-          "Supportive",
-          "Organized",
-          "Inspiring",
-          "Patient"
-        ]
-      },
-      {
-        "name": "Michael O'Connor",
-        "occupation": "Entrepreneur",
-        "mbti": "ENTP",
-        "age": 35,
-        "hobby": "Rock Climbing",
-        "gender": "male",
-        "characteristics": [
-          "Adventurous",
-          "Quick-witted",
-          "Confident",
-          "Adaptable",
-          "Resourceful"
-        ]
-      },
-      {
-        "name": "Lisa Wang",
-        "occupation": "Doctor",
-        "mbti": "ISTJ",
-        "age": 31,
-        "hobby": "Classical Music",
-        "gender": "female",
-        "characteristics": [
-          "Precise",
-          "Responsible",
-          "Logical",
-          "Dedicated",
-          "Methodical"
-        ]
-      },
-      {
-        "name": "David Kim",
-        "occupation": "Musician",
-        "mbti": "INFP",
-        "age": 27,
-        "hobby": "Writing",
-        "gender": "male",
-        "characteristics": [
-          "Idealistic",
-          "Creative",
-          "Sensitive",
-          "Introspective",
-          "Passionate"
-        ]
-      },
-      {
-        "name": "Rachel Foster",
-        "occupation": "Psychologist",
-        "mbti": "INFJ",
-        "age": 33,
-        "hobby": "Photography",
-        "gender": "female",
-        "characteristics": [
-          "Insightful",
-          "Compassionate",
-          "Complex",
-          "Determined",
-          "Visionary"
-        ]
-      },
-      {
-        "name": "Thomas Anderson",
-        "occupation": "Architect",
-        "mbti": "INTP",
-        "age": 30,
-        "hobby": "3D Printing",
-        "gender": "male",
-        "characteristics": [
-          "Innovative",
-          "Logical",
-          "Curious",
-          "Abstract",
-          "Independent"
-        ]
-      },
-      {
-        "name": "Maya Patel",
-        "occupation": "Marketing Manager",
-        "mbti": "ESFP",
-        "age": 26,
-        "hobby": "Dancing",
-        "gender": "female",
-        "characteristics": [
-          "Energetic",
-          "Sociable",
-          "Adaptable",
-          "Persuasive",
-          "Optimistic"
-        ]
-      }
-    ]
-  }
+  "characters": [
+    {
+      "name": "Alex Thompson",
+      "occupation": "Software Engineer",
+      "mbti": "INTJ",
+      "age": 28,
+      "hobby": "Chess",
+      "gender": "male",
+      "characteristics": [
+        "Analytical",
+        "Problem-solver",
+        "Reserved",
+        "Strategic",
+        "Innovative"
+      ]
+    },
+    {
+      "name": "Emma Rodriguez",
+      "occupation": "Artist",
+      "mbti": "ENFP",
+      "age": 25,
+      "hobby": "Painting",
+      "gender": "female",
+      "characteristics": [
+        "Creative",
+        "Enthusiastic",
+        "Free-spirited",
+        "Empathetic",
+        "Spontaneous"
+      ]
+    },
+    {
+      "name": "James Chen",
+      "occupation": "Chef",
+      "mbti": "ISFJ",
+      "age": 32,
+      "hobby": "Gardening",
+      "gender": "male",
+      "characteristics": [
+        "Patient",
+        "Detail-oriented",
+        "Caring",
+        "Traditional",
+        "Reliable"
+      ]
+    },
+    {
+      "name": "Sarah Mitchell",
+      "occupation": "Teacher",
+      "mbti": "ENFJ",
+      "age": 29,
+      "hobby": "Reading",
+      "gender": "female",
+      "characteristics": [
+        "Charismatic",
+        "Supportive",
+        "Organized",
+        "Inspiring",
+        "Patient"
+      ]
+    },
+    {
+      "name": "Michael O'Connor",
+      "occupation": "Entrepreneur",
+      "mbti": "ENTP",
+      "age": 35,
+      "hobby": "Rock Climbing",
+      "gender": "male",
+      "characteristics": [
+        "Adventurous",
+        "Quick-witted",
+        "Confident",
+        "Adaptable",
+        "Resourceful"
+      ]
+    },
+    {
+      "name": "Lisa Wang",
+      "occupation": "Doctor",
+      "mbti": "ISTJ",
+      "age": 31,
+      "hobby": "Classical Music",
+      "gender": "female",
+      "characteristics": [
+        "Precise",
+        "Responsible",
+        "Logical",
+        "Dedicated",
+        "Methodical"
+      ]
+    },
+    {
+      "name": "David Kim",
+      "occupation": "Musician",
+      "mbti": "INFP",
+      "age": 27,
+      "hobby": "Writing",
+      "gender": "male",
+      "characteristics": [
+        "Idealistic",
+        "Creative",
+        "Sensitive",
+        "Introspective",
+        "Passionate"
+      ]
+    },
+    {
+      "name": "Rachel Foster",
+      "occupation": "Psychologist",
+      "mbti": "INFJ",
+      "age": 33,
+      "hobby": "Photography",
+      "gender": "female",
+      "characteristics": [
+        "Insightful",
+        "Compassionate",
+        "Complex",
+        "Determined",
+        "Visionary"
+      ]
+    },
+    {
+      "name": "Thomas Anderson",
+      "occupation": "Architect",
+      "mbti": "INTP",
+      "age": 30,
+      "hobby": "3D Printing",
+      "gender": "male",
+      "characteristics": [
+        "Innovative",
+        "Logical",
+        "Curious",
+        "Abstract",
+        "Independent"
+      ]
+    },
+    {
+      "name": "Maya Patel",
+      "occupation": "Marketing Manager",
+      "mbti": "ESFP",
+      "age": 26,
+      "hobby": "Dancing",
+      "gender": "female",
+      "characteristics": [
+        "Energetic",
+        "Sociable",
+        "Adaptable",
+        "Persuasive",
+        "Optimistic"
+      ]
+    }
+  ]
+}
