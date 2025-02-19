@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { checkPosition, getCheckpoints, goto, playAnimation, wanderAround, talkTo } from '../utils/character'
 import NPCData from '../data/NPC.json'
+import { ChatLog } from './ChatLog'
 
 export function NPCController() {
   const [characters, setCharacters] = useState(NPCData.characters)
@@ -17,6 +18,9 @@ export function NPCController() {
     'Talking',
     'Arguing'
   ]
+
+  // Add chat log
+  const chatLog = ChatLog()
 
   // Initialize queues for all characters
   useEffect(() => {
@@ -122,6 +126,10 @@ export function NPCController() {
     return new Promise(async (resolve) => {
       switch (action.type) {
         case 'goto':
+          chatLog.addMessage({
+            character: character.name,
+            text: `is going to ${action.checkpoint}`
+          })
           const movement = goto(character.name, action.checkpoint, {
             playAnimation: (name) => {
               if (character.animations?.[name]) {
@@ -145,6 +153,10 @@ export function NPCController() {
           break
 
         case 'animation':
+          chatLog.addMessage({
+            character: character.name,
+            text: `is ${action.animation.toLowerCase()}`
+          })
           playAnimation(character.name, action.animation, {
             playAnimation: (name) => {
               if (character.animations?.[name]) {
@@ -161,6 +173,12 @@ export function NPCController() {
         case 'talkTo':
           const targetChar = characters.find(c => c.id === action.targetId)
           
+          // Initial message
+          chatLog.addMessage({
+            character: character.name,
+            text: `approaches ${targetChar.name} for a conversation`
+          })
+
           // Force stop target character's current action
           if (targetChar.ref.current) {
             targetChar.ref.current.activeGoto = null
@@ -212,6 +230,20 @@ export function NPCController() {
 
               if (done) {
                 clearInterval(updateInterval)
+                
+                // Add conversation messages
+                const conversations = [
+                  { character: character.name, text: "Hey, how are you doing?" },
+                  { character: targetChar.name, text: "I'm doing great, thanks for asking!" },
+                  { character: character.name, text: "That's wonderful to hear." }
+                ]
+                
+                conversations.forEach((msg, index) => {
+                  setTimeout(() => {
+                    chatLog.addMessage(msg)
+                  }, index * 1500) // Stagger messages every 1.5 seconds
+                })
+
                 setTimeout(() => {
                   if (character.ref.current) character.ref.current.activeGoto = null
                   if (targetChar.ref.current) targetChar.ref.current.activeGoto = null
@@ -229,109 +261,114 @@ export function NPCController() {
   }
 
   return (
-    <div className="fixed right-4 top-4 bg-white p-4 rounded-lg shadow-lg w-96 max-h-[90vh] overflow-y-auto">
-      <h3 className="text-lg font-bold mb-4">NPC Controller</h3>
+    <>
+      <div className="fixed right-4 top-4 bg-white p-4 rounded-lg shadow-lg w-96 max-h-[90vh] overflow-y-auto">
+        <h3 className="text-lg font-bold mb-4">NPC Controller</h3>
 
-      {/* Character Queues */}
-      {characters.map(character => (
-        <div key={character.id} className="mb-6 p-4 border rounded">
-          <h4 className="font-medium mb-2">{character.name}'s Queue ({(characterQueues[character.id] || []).length}/3):</h4>
-          
-          {/* Queue Display */}
-          <div className="bg-gray-100 p-2 rounded mb-2 min-h-[60px]">
-            {(characterQueues[character.id] || []).map((action, index) => (
-              <div key={index} className="text-sm">
-                {action.type === 'goto' && `${index + 1}. Go to ${action.checkpoint}`}
-                {action.type === 'animation' && `${index + 1}. Play ${action.animation}`}
-                {action.type === 'talkTo' && `${index + 1}. Talk to ${characters.find(c => c.id === action.targetId)?.name}`}
-              </div>
-            ))}
-          </div>
-
-          {/* Action Controls */}
-          <div className="grid grid-cols-2 gap-2 mb-2">
-            {/* Animation Selection */}
-            <select 
-              className="p-2 border rounded"
-              onChange={(e) => addActionToQueue(character.id, {
-                type: 'animation',
-                animation: e.target.value
-              })}
-              disabled={isExecuting || characterQueues[character.id]?.length >= 3}
-            >
-              <option value="">Add Animation...</option>
-              {animations.map(anim => (
-                <option key={anim} value={anim}>{anim}</option>
+        {/* Character Queues */}
+        {characters.map(character => (
+          <div key={character.id} className="mb-6 p-4 border rounded">
+            <h4 className="font-medium mb-2">{character.name}'s Queue ({(characterQueues[character.id] || []).length}/3):</h4>
+            
+            {/* Queue Display */}
+            <div className="bg-gray-100 p-2 rounded mb-2 min-h-[60px]">
+              {(characterQueues[character.id] || []).map((action, index) => (
+                <div key={index} className="text-sm">
+                  {action.type === 'goto' && `${index + 1}. Go to ${action.checkpoint}`}
+                  {action.type === 'animation' && `${index + 1}. Play ${action.animation}`}
+                  {action.type === 'talkTo' && `${index + 1}. Talk to ${characters.find(c => c.id === action.targetId)?.name}`}
+                </div>
               ))}
-            </select>
+            </div>
 
-            {/* Checkpoint Selection */}
-            <select
-              className="p-2 border rounded"
-              onChange={(e) => addActionToQueue(character.id, {
-                type: 'goto',
-                checkpoint: e.target.value
-              })}
-              disabled={isExecuting || characterQueues[character.id]?.length >= 3}
-            >
-              <option value="">Go to...</option>
-              {checkpoints.map(checkpoint => (
-                <option key={checkpoint} value={checkpoint}>{checkpoint}</option>
-              ))}
-            </select>
-
-            {/* Talk To Selection */}
-            <select
-              className="p-2 border rounded"
-              onChange={(e) => addActionToQueue(character.id, {
-                type: 'talkTo',
-                targetId: Number(e.target.value)
-              })}
-              disabled={isExecuting || characterQueues[character.id]?.length >= 3}
-            >
-              <option value="">Talk to...</option>
-              {characters
-                .filter(c => c.id !== character.id)
-                .map(char => (
-                  <option key={char.id} value={char.id}>{char.name}</option>
+            {/* Action Controls */}
+            <div className="grid grid-cols-2 gap-2 mb-2">
+              {/* Animation Selection */}
+              <select 
+                className="p-2 border rounded"
+                onChange={(e) => addActionToQueue(character.id, {
+                  type: 'animation',
+                  animation: e.target.value
+                })}
+                disabled={isExecuting || characterQueues[character.id]?.length >= 3}
+              >
+                <option value="">Add Animation...</option>
+                {animations.map(anim => (
+                  <option key={anim} value={anim}>{anim}</option>
                 ))}
-            </select>
+              </select>
 
-            {/* Clear Queue Button */}
-            <button
-              className="bg-red-500 text-white px-4 py-2 rounded"
-              onClick={() => clearQueue(character.id)}
-              disabled={isExecuting || !characterQueues[character.id]?.length}
-            >
-              Clear Queue
-            </button>
+              {/* Checkpoint Selection */}
+              <select
+                className="p-2 border rounded"
+                onChange={(e) => addActionToQueue(character.id, {
+                  type: 'goto',
+                  checkpoint: e.target.value
+                })}
+                disabled={isExecuting || characterQueues[character.id]?.length >= 3}
+              >
+                <option value="">Go to...</option>
+                {checkpoints.map(checkpoint => (
+                  <option key={checkpoint} value={checkpoint}>{checkpoint}</option>
+                ))}
+              </select>
+
+              {/* Talk To Selection */}
+              <select
+                className="p-2 border rounded"
+                onChange={(e) => addActionToQueue(character.id, {
+                  type: 'talkTo',
+                  targetId: Number(e.target.value)
+                })}
+                disabled={isExecuting || characterQueues[character.id]?.length >= 3}
+              >
+                <option value="">Talk to...</option>
+                {characters
+                  .filter(c => c.id !== character.id)
+                  .map(char => (
+                    <option key={char.id} value={char.id}>{char.name}</option>
+                  ))}
+              </select>
+
+              {/* Clear Queue Button */}
+              <button
+                className="bg-red-500 text-white px-4 py-2 rounded"
+                onClick={() => clearQueue(character.id)}
+                disabled={isExecuting || !characterQueues[character.id]?.length}
+              >
+                Clear Queue
+              </button>
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
 
-      {/* Global Controls */}
-      <div className="flex gap-2">
-        <button
-          className="bg-red-500 text-white px-4 py-2 rounded flex-1"
-          onClick={clearAllQueues}
-          disabled={isExecuting}
-        >
-          Clear All Queues
-        </button>
-        <button
-          className="bg-green-500 text-white px-4 py-2 rounded flex-1"
-          onClick={executeAllQueues}
-          disabled={isExecuting || Object.values(characterQueues).every(queue => !queue.length)}
-        >
-          Execute All
-        </button>
+        {/* Global Controls */}
+        <div className="flex gap-2">
+          <button
+            className="bg-red-500 text-white px-4 py-2 rounded flex-1"
+            onClick={clearAllQueues}
+            disabled={isExecuting}
+          >
+            Clear All Queues
+          </button>
+          <button
+            className="bg-green-500 text-white px-4 py-2 rounded flex-1"
+            onClick={executeAllQueues}
+            disabled={isExecuting || Object.values(characterQueues).every(queue => !queue.length)}
+          >
+            Execute All
+          </button>
+        </div>
+
+        {showDoneMessage && (
+          <div className="text-green-500 text-center font-medium mt-4">
+            All actions completed!
+          </div>
+        )}
       </div>
 
-      {showDoneMessage && (
-        <div className="text-green-500 text-center font-medium mt-4">
-          All actions completed!
-        </div>
-      )}
-    </div>
+      {/* Add Chat Log component */}
+      {chatLog.component}
+    </>
   )
 } 
