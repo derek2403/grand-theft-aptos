@@ -11,6 +11,7 @@ export function Boy() {
   const texture = useTexture('/men/shaded.png')
   const modelRef = useRef()
   const mixerRef = useRef()
+  const spotlightRef = useRef()
 
   useEffect(() => {
     const loader = new FBXLoader()
@@ -19,14 +20,20 @@ export function Boy() {
       fbx.traverse((child) => {
         if (child.isMesh) {
           child.material = new THREE.MeshStandardMaterial({ 
-            map: texture
+            map: texture,
+            roughness: 0.5,
+            metalness: 0.1,
+            envMapIntensity: 1,
+            color: 0xffffff,
+            normalScale: new THREE.Vector2(1, 1),
+            aoMapIntensity: 1,
           })
           child.castShadow = true
           child.receiveShadow = true
         }
       })
       
-      fbx.scale.setScalar(0.01)
+      fbx.scale.setScalar(0.015)
       
       const mixer = new THREE.AnimationMixer(fbx)
       mixerRef.current = mixer
@@ -79,6 +86,15 @@ export function Boy() {
     if (mixerRef.current) {
       mixerRef.current.update(delta)
     }
+
+    if (modelRef.current && spotlightRef.current) {
+      const position = modelRef.current.position
+      // Position the light directly above the character
+      spotlightRef.current.position.set(position.x, position.y + 5, position.z)
+      // Target directly below the light (at character position)
+      spotlightRef.current.target.position.set(position.x, position.y, position.z)
+      spotlightRef.current.target.updateMatrixWorld()
+    }
   })
 
   useEffect(() => {
@@ -87,16 +103,37 @@ export function Boy() {
     }
   }, [animationsLoaded])
 
-  useCharacterController(animationsLoaded, modelRef)
+  const { position } = useCharacterController(animationsLoaded, modelRef)
+
+  useEffect(() => {
+    console.log(`Character is at: ${position.x}, ${position.z}`)
+  }, [position])
 
   if (!model) return null
 
   return (
-    <primitive 
-      ref={modelRef} 
-      object={model} 
-      position={[0, 0, 0]}
-      rotation={[0, Math.PI, 0]}
-    />
+    <>
+      <primitive 
+        ref={modelRef} 
+        object={model} 
+        position={[0, 0, 0]}
+        rotation={[0, Math.PI, 0]}
+      />
+      <group>
+        <spotLight
+          ref={spotlightRef}
+          position={[0, 5, 0]}
+          angle={Math.PI / 3}  // Wider angle (60 degrees)
+          penumbra={0.2}
+          intensity={10}       // Much brighter
+          distance={12}        // Longer range
+          color="#FFFFFF"
+          castShadow
+          decay={1.5}         // Slower light falloff
+        >
+          <primitive object={new THREE.Object3D()} attach="target" />
+        </spotLight>
+      </group>
+    </>
   )
 } 
