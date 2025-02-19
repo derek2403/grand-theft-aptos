@@ -1,5 +1,54 @@
 import { useState, useEffect, useRef } from 'react'
 
+const generateDialogue = async (action, character, targetCharacter = null) => {
+  try {
+    // Validate required data before sending
+    if (!action?.type || !character?.name) {
+      console.error('Missing required data for dialogue generation:', { action, character })
+      return null
+    }
+
+    const response = await fetch('/api/generate-chat', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        action,
+        character: {
+          name: character.name,
+          occupation: character.occupation || 'Unknown',
+          mbti: character.mbti || 'Unknown',
+          hobby: character.hobby || 'Unknown',
+          characteristics: character.characteristics || [],
+          gender: character.gender || 'Unknown'
+        },
+        targetCharacter: targetCharacter ? {
+          name: targetCharacter.name,
+          occupation: targetCharacter.occupation || 'Unknown',
+          mbti: targetCharacter.mbti || 'Unknown',
+          hobby: targetCharacter.hobby || 'Unknown',
+          characteristics: targetCharacter.characteristics || [],
+          gender: targetCharacter.gender || 'Unknown'
+        } : null
+      })
+    })
+
+    const data = await response.json()
+
+    if (!response.ok) {
+      console.error('API Error:', data)
+      // Return null instead of throwing to avoid crashing
+      return null
+    }
+
+    return data.dialogue
+  } catch (error) {
+    console.error('Error generating dialogue:', error)
+    return null
+  }
+}
+
 export function ChatLog() {
   const [isOpen, setIsOpen] = useState(false)
   const [messages, setMessages] = useState([])
@@ -13,12 +62,48 @@ export function ChatLog() {
   }, [messages, isOpen])
 
   // Add a new message to the chat
-  const addMessage = (message) => {
+  const addMessage = async (message) => {
+    // If it's a system message, add it directly
+    if (message.character === 'System') {
+      setMessages(prev => [...prev, {
+        id: Date.now(),
+        timestamp: new Date().toLocaleTimeString(),
+        character: 'System',
+        text: message.text
+      }])
+      return
+    }
+
+    // Add the initial action message
     setMessages(prev => [...prev, {
-      id: Date.now(),
-      timestamp: new Date().toLocaleTimeString(),
-      ...message
+      id: message.id || Date.now(),
+      timestamp: message.timestamp || new Date().toLocaleTimeString(),
+      character: message.displayName || message.character,
+      text: message.text
     }])
+
+    // For character actions, generate contextual dialogue
+    if (message.action && message.characterData) {
+      const dialogue = await generateDialogue(
+        message.action,
+        message.characterData,
+        message.targetCharacterData || null
+      )
+
+      if (dialogue) {
+        // Add each line of dialogue with a small delay
+        dialogue.forEach((line, index) => {
+          setTimeout(() => {
+            setMessages(prev => [...prev, {
+              id: Date.now() + index,
+              timestamp: new Date().toLocaleTimeString(),
+              character: line.speaker,
+              text: line.text
+            }])
+          }, index * 1000) // 1 second delay between messages
+        })
+      }
+    }
   }
 
   // Clear all messages
@@ -61,7 +146,7 @@ export function ChatLog() {
                 <div key={msg.id} className="mb-2">
                   <div className="text-xs text-gray-500">{msg.timestamp}</div>
                   <div className="flex items-start">
-                    <span className="font-bold text-blue-600">{msg.character}:</span>
+                    <span className="font-bold text-blue-600">{msg.character}</span>
                     <span className="ml-2 text-gray-700">{msg.text}</span>
                   </div>
                 </div>

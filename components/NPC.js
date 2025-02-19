@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { checkPosition, getCheckpoints, goto, playAnimation, wanderAround, talkTo } from '../utils/character'
 import NPCData from '../data/NPC.json'
 import { ChatLog } from './ChatLog'
+import { generateCharacterActions } from '../services/openai'
 
 export function NPCController() {
   const [characters, setCharacters] = useState(NPCData.characters)
@@ -9,6 +10,8 @@ export function NPCController() {
   const [characterQueues, setCharacterQueues] = useState({})
   const [isExecuting, setIsExecuting] = useState(false)
   const [showDoneMessage, setShowDoneMessage] = useState(false)
+  const [isAutoRunning, setIsAutoRunning] = useState(true)
+  const chatLog = ChatLog()
 
   const animations = [
     'Dancing',
@@ -19,10 +22,7 @@ export function NPCController() {
     'Arguing'
   ]
 
-  // Add chat log
-  const chatLog = ChatLog()
-
-  // Initialize queues for all characters
+  // Initialize queues
   useEffect(() => {
     const initialQueues = {}
     characters.forEach(char => {
@@ -35,6 +35,44 @@ export function NPCController() {
     const points = getCheckpoints()
     setCheckpoints(Object.keys(points))
   }, [])
+
+  // Auto-run effect
+  useEffect(() => {
+    let isActive = true
+
+    const runAutoLoop = async () => {
+      while (isActive && isAutoRunning) {
+        // Generate new actions if not executing and queues are empty
+        if (!isExecuting && Object.values(characterQueues).every(queue => queue.length === 0)) {
+          await generateAllActions()
+        }
+        
+        // Execute actions if queues are filled and not currently executing
+        if (!isExecuting && Object.values(characterQueues).some(queue => queue.length > 0)) {
+          await executeAllQueues()
+        }
+
+        // Small delay to prevent tight loop
+        await new Promise(resolve => setTimeout(resolve, 1000))
+      }
+    }
+
+    runAutoLoop()
+
+    // Cleanup function
+    return () => {
+      isActive = false
+    }
+  }, [isAutoRunning, isExecuting, characterQueues])
+
+  // Add toggle button for auto-run
+  const toggleAutoRun = () => {
+    setIsAutoRunning(prev => !prev)
+    chatLog.addMessage({
+      character: 'System',
+      text: `Auto-run ${!isAutoRunning ? 'started' : 'stopped'}`
+    })
+  }
 
   const addActionToQueue = (characterId, action) => {
     if (characterQueues[characterId]?.length >= 3) return // Max 3 actions per character
@@ -124,63 +162,77 @@ export function NPCController() {
     if (!action) return Promise.resolve()
 
     return new Promise(async (resolve) => {
+      // Create base message data
+      const messageData = {
+        id: Date.now(),
+        timestamp: new Date().toLocaleTimeString(),
+        displayName: character.name, // Add displayName for rendering
+        text: '',
+        action: action,
+        characterData: {  // Move full character data to separate field
+          name: character.name,
+          occupation: character.occupation,
+          mbti: character.mbti,
+          hobby: character.hobby,
+          characteristics: character.characteristics,
+          gender: character.gender
+        }
+      }
+
       switch (action.type) {
         case 'goto':
-          chatLog.addMessage({
-            character: character.name,
-            text: `is going to ${action.checkpoint}`
-          })
-          const movement = goto(character.name, action.checkpoint, {
-            playAnimation: (name) => {
-              if (character.animations?.[name]) {
-                Object.values(character.animations).forEach(anim => {
-                  anim.fadeOut(0.2)
-                })
-                character.animations[name].reset().fadeIn(0.2).play()
-              }
-            },
-            onComplete: () => {
-              if (character.ref.current) {
-                character.ref.current.activeGoto = null
-              }
-            }
-          })
+          messageData.text = `is going to ${action.checkpoint}`
+          chatLog.addMessage(messageData)
           
-          if (movement) {
-            character.ref.current.activeGoto = movement
+          if (character.ref?.current) {
+            character.ref.current.activeGoto = goto(
+              character.name,
+              action.checkpoint,
+              {
+                playAnimation: (name) => {
+                  if (character.animations?.[name]) {
+                    Object.values(character.animations).forEach(anim => {
+                      anim.fadeOut(0.2)
+                    })
+                    character.animations[name].reset().fadeIn(0.2).play()
+                  }
+                }
+              }
+            )
           }
-          setTimeout(resolve, 5000)
+          
+          setTimeout(() => {
+            if (character.ref?.current) character.ref.current.activeGoto = null
+            resolve()
+          }, 5000)
           break
 
         case 'animation':
-          chatLog.addMessage({
-            character: character.name,
-            text: `is ${action.animation.toLowerCase()}`
-          })
-          playAnimation(character.name, action.animation, {
-            playAnimation: (name) => {
-              if (character.animations?.[name]) {
-                Object.values(character.animations).forEach(anim => {
-                  anim.fadeOut(0.2)
-                })
-                character.animations[name].reset().fadeIn(0.2).play()
-              }
-            }
-          })
-          setTimeout(resolve, 5000)
+          messageData.text = `is ${action.animation.toLowerCase()}`
+          chatLog.addMessage(messageData)
+
+          if (character.animations?.[action.animation]) {
+            Object.values(character.animations).forEach(anim => {
+              anim.fadeOut(0.2)
+            })
+            character.animations[action.animation].reset().fadeIn(0.2).play()
+          }
+
+          setTimeout(() => {
+            resolve()
+          }, 3000)
           break
 
         case 'talkTo':
           const targetChar = characters.find(c => c.id === action.targetId)
-          
-          // Initial message
-          chatLog.addMessage({
-            character: character.name,
-            text: `approaches ${targetChar.name} for a conversation`
-          })
+          if (!targetChar) {
+            console.error('Target character not found:', action.targetId)
+            resolve()
+            return
+          }
 
           // Force stop target character's current action
-          if (targetChar.ref.current) {
+          if (targetChar.ref?.current) {
             targetChar.ref.current.activeGoto = null
           }
           if (targetChar.animations) {
@@ -188,16 +240,60 @@ export function NPCController() {
               anim.fadeOut(0.2)
             })
           }
-          
-          // Clear target's queue
-          setCharacterQueues(prev => ({
-            ...prev,
-            [action.targetId]: []
-          }))
+
+          messageData.text = `approaches ${targetChar.name} for a conversation`
+          messageData.targetCharacterData = {  // Add target character data
+            name: targetChar.name,
+            occupation: targetChar.occupation,
+            mbti: targetChar.mbti,
+            hobby: targetChar.hobby,
+            characteristics: targetChar.characteristics,
+            gender: targetChar.gender
+          }
+          chatLog.addMessage(messageData)
 
           const interaction = talkTo(
             character.name,
             targetChar.name,
+            {
+              playAnimation: (name, charName) => {
+                const char = charName === character.name ? character : targetChar
+                if (char.animations?.[name]) {
+                  Object.values(char.animations).forEach(anim => {
+                    anim.fadeOut(0.2)
+                  })
+                  char.animations[name].reset().fadeIn(0.2).play()
+                }
+              }
+            }
+          )
+
+          const updateInterval = setInterval(() => {
+            if (character.ref?.current && targetChar.ref?.current) {
+              const done = interaction.update(
+                character.ref.current,
+                targetChar.ref.current,
+                1/60
+              )
+
+              if (done) {
+                clearInterval(updateInterval)
+                setTimeout(() => {
+                  if (character.ref?.current) character.ref.current.activeGoto = null
+                  if (targetChar.ref?.current) targetChar.ref.current.activeGoto = null
+                  resolve()
+                }, 5000)
+              }
+            }
+          }, 1000/60)
+          break
+
+        case 'wander':
+          messageData.text = 'is wandering around'
+          chatLog.addMessage(messageData)
+
+          const wanderMovement = wanderAround(
+            character.name,
             {
               playAnimation: (name) => {
                 if (character.animations?.[name]) {
@@ -207,51 +303,19 @@ export function NPCController() {
                   character.animations[name].reset().fadeIn(0.2).play()
                 }
               }
-            },
-            {
-              playAnimation: (name) => {
-                if (targetChar.animations?.[name]) {
-                  Object.values(targetChar.animations).forEach(anim => {
-                    anim.fadeOut(0.2)
-                  })
-                  targetChar.animations[name].reset().fadeIn(0.2).play()
-                }
-              }
             }
           )
 
-          const updateInterval = setInterval(() => {
-            if (character.ref.current && targetChar.ref.current) {
-              const done = interaction.update(
-                character.ref.current,
-                targetChar.ref.current,
-                1/60
-              )
+          if (character.ref?.current) {
+            character.ref.current.activeGoto = wanderMovement
+          }
 
-              if (done) {
-                clearInterval(updateInterval)
-                
-                // Add conversation messages
-                const conversations = [
-                  { character: character.name, text: "Hey, how are you doing?" },
-                  { character: targetChar.name, text: "I'm doing great, thanks for asking!" },
-                  { character: character.name, text: "That's wonderful to hear." }
-                ]
-                
-                conversations.forEach((msg, index) => {
-                  setTimeout(() => {
-                    chatLog.addMessage(msg)
-                  }, index * 1500) // Stagger messages every 1.5 seconds
-                })
-
-                setTimeout(() => {
-                  if (character.ref.current) character.ref.current.activeGoto = null
-                  if (targetChar.ref.current) targetChar.ref.current.activeGoto = null
-                  resolve()
-                }, 5000)
-              }
+          setTimeout(() => {
+            if (character.ref?.current) {
+              character.ref.current.activeGoto = null
             }
-          }, 1000/60)
+            resolve()
+          }, 10000) // Wander for 10 seconds
           break
 
         default:
@@ -260,10 +324,106 @@ export function NPCController() {
     })
   }
 
+  const generateAllActions = async () => {
+    if (isExecuting) return
+    
+    setIsExecuting(true)
+    const newQueues = {}
+
+    try {
+      // Generate actions for each character
+      const actionPromises = characters.map(async (character) => {
+        const otherCharacters = characters.filter(c => c.id !== character.id)
+        const actions = await generateCharacterActions(character, otherCharacters)
+        newQueues[character.id] = actions
+      })
+
+      await Promise.all(actionPromises)
+      
+      // Check if all characters have exactly 3 actions
+      const allValid = Object.values(newQueues).every(queue => queue.length === 3)
+      if (!allValid) {
+        throw new Error('Not all characters received 3 actions')
+      }
+
+      // Resolve talk conflicts by replacing with animations
+      const talkTargets = new Map() // Map to store who is talking to whom
+      const animations = ['Dancing', 'Happy', 'Sad', 'Singing', 'Talking', 'Arguing']
+
+      // First pass: record all talk interactions
+      Object.entries(newQueues).forEach(([charId, queue]) => {
+        queue.forEach((action, index) => {
+          if (action.type === 'talkTo') {
+            const targetName = action.targetName
+            if (talkTargets.has(targetName)) {
+              // Conflict found: store for resolution
+              const conflictInfo = {
+                charId,
+                index,
+                targetName
+              }
+              talkTargets.get(targetName).conflicts.push(conflictInfo)
+            } else {
+              talkTargets.set(targetName, {
+                initiator: charId,
+                conflicts: []
+              })
+            }
+          }
+        })
+      })
+
+      // Second pass: resolve conflicts
+      talkTargets.forEach((value, targetName) => {
+        if (value.conflicts.length > 0) {
+          // Keep the first talk interaction, replace others with random animations
+          value.conflicts.forEach(conflict => {
+            const randomAnimation = animations[Math.floor(Math.random() * animations.length)]
+            newQueues[conflict.charId][conflict.index] = {
+              type: 'animation',
+              animation: randomAnimation
+            }
+            
+            chatLog.addMessage({
+              character: 'System',
+              text: `Resolved talk conflict: Changed action to ${randomAnimation}`
+            })
+          })
+        }
+      })
+
+      setCharacterQueues(newQueues)
+      chatLog.addMessage({
+        character: 'System',
+        text: 'Actions generated for all characters. Press Execute All to start.'
+      })
+    } catch (error) {
+      console.error('Error generating actions:', error)
+      chatLog.addMessage({
+        character: 'System',
+        text: 'Error generating actions. Please try again.'
+      })
+      // Clear any partial queues
+      clearAllQueues()
+    } finally {
+      setIsExecuting(false)
+    }
+  }
+
   return (
     <>
       <div className="fixed right-4 top-4 bg-white p-4 rounded-lg shadow-lg w-96 max-h-[90vh] overflow-y-auto">
-        <h3 className="text-lg font-bold mb-4">NPC Controller</h3>
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-bold">NPC Controller</h3>
+          <button
+            className={`px-4 py-2 rounded ${
+              isAutoRunning ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'
+            } text-white`}
+            onClick={toggleAutoRun}
+          >
+            {isAutoRunning ? 'Stop Auto' : 'Start Auto'}
+          </button>
+        </div>
 
         {/* Character Queues */}
         {characters.map(character => (
@@ -281,80 +441,30 @@ export function NPCController() {
               ))}
             </div>
 
-            {/* Action Controls */}
-            <div className="grid grid-cols-2 gap-2 mb-2">
-              {/* Animation Selection */}
-              <select 
-                className="p-2 border rounded"
-                onChange={(e) => addActionToQueue(character.id, {
-                  type: 'animation',
-                  animation: e.target.value
-                })}
-                disabled={isExecuting || characterQueues[character.id]?.length >= 3}
-              >
-                <option value="">Add Animation...</option>
-                {animations.map(anim => (
-                  <option key={anim} value={anim}>{anim}</option>
-                ))}
-              </select>
-
-              {/* Checkpoint Selection */}
-              <select
-                className="p-2 border rounded"
-                onChange={(e) => addActionToQueue(character.id, {
-                  type: 'goto',
-                  checkpoint: e.target.value
-                })}
-                disabled={isExecuting || characterQueues[character.id]?.length >= 3}
-              >
-                <option value="">Go to...</option>
-                {checkpoints.map(checkpoint => (
-                  <option key={checkpoint} value={checkpoint}>{checkpoint}</option>
-                ))}
-              </select>
-
-              {/* Talk To Selection */}
-              <select
-                className="p-2 border rounded"
-                onChange={(e) => addActionToQueue(character.id, {
-                  type: 'talkTo',
-                  targetId: Number(e.target.value)
-                })}
-                disabled={isExecuting || characterQueues[character.id]?.length >= 3}
-              >
-                <option value="">Talk to...</option>
-                {characters
-                  .filter(c => c.id !== character.id)
-                  .map(char => (
-                    <option key={char.id} value={char.id}>{char.name}</option>
-                  ))}
-              </select>
-
-              {/* Clear Queue Button */}
-              <button
-                className="bg-red-500 text-white px-4 py-2 rounded"
-                onClick={() => clearQueue(character.id)}
-                disabled={isExecuting || !characterQueues[character.id]?.length}
-              >
-                Clear Queue
-              </button>
-            </div>
+            {/* Clear Queue Button */}
+            <button
+              className="bg-red-500 text-white px-4 py-2 rounded w-full"
+              onClick={() => clearQueue(character.id)}
+              disabled={isExecuting || !characterQueues[character.id]?.length}
+            >
+              Clear Queue
+            </button>
           </div>
         ))}
 
-        {/* Global Controls */}
+        {/* Manual Control Buttons */}
         <div className="flex gap-2">
           <button
-            className="bg-red-500 text-white px-4 py-2 rounded flex-1"
-            onClick={clearAllQueues}
-            disabled={isExecuting}
+            className="bg-blue-500 text-white px-4 py-2 rounded flex-1"
+            onClick={generateAllActions}
+            disabled={isExecuting || isAutoRunning}
           >
-            Clear All Queues
+            Generate Actions
           </button>
           <button
             className="bg-green-500 text-white px-4 py-2 rounded flex-1"
             onClick={executeAllQueues}
-            disabled={isExecuting || Object.values(characterQueues).every(queue => !queue.length)}
+            disabled={isExecuting || isAutoRunning || Object.values(characterQueues).every(queue => !queue.length)}
           >
             Execute All
           </button>
@@ -367,7 +477,7 @@ export function NPCController() {
         )}
       </div>
 
-      {/* Add Chat Log component */}
+      {/* Chat Log component */}
       {chatLog.component}
     </>
   )
