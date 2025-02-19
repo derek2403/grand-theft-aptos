@@ -1,8 +1,11 @@
 import React, { useState } from 'react'
 import presets from '../data/presets.json'
 
-export function CreateCharacterModal({ showModal, onClose, onSubmit }) {
-  // Move state management inside the component
+export function CreateCharacterModal({ 
+  showModal, 
+  onClose = () => {},
+  onSubmit = (form) => console.log('Form submitted:', form)
+}) {
   const [characterForm, setCharacterForm] = useState({
     name: '',
     occupation: '',
@@ -84,7 +87,12 @@ export function CreateCharacterModal({ showModal, onClose, onSubmit }) {
       alert("Please fill in all fields")
       return
     }
-    onSubmit(characterForm)
+    
+    if (typeof onSubmit === 'function') {
+      onSubmit(characterForm)
+    } else {
+      console.warn('No onSubmit handler provided to CreateCharacterModal')
+    }
   }
 
   const handleRandomize = () => {

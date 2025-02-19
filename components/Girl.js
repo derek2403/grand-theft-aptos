@@ -168,13 +168,40 @@ export function Girl({ character }) {
       character.animations = animationsLoaded
       character.ref = modelRef
       
+      // Add animation event handlers to track current animation
+      Object.entries(animationsLoaded).forEach(([name, action]) => {
+        action.getMixer().addEventListener('loop', () => {
+          if (action.isRunning()) {
+            modelRef.current.currentAnimation = name
+          }
+        })
+        
+        action.getMixer().addEventListener('finished', () => {
+          if (action.isRunning()) {
+            modelRef.current.currentAnimation = null
+          }
+        })
+      })
+
       // Debug log
-      console.log('Boy animations loaded:', {
+      console.log('Girl animations loaded:', {
         animationCount: Object.keys(animationsLoaded).length,
         availableAnimations: Object.keys(animationsLoaded)
       })
     }
   }, [character, animationsLoaded])
+
+  // Add this useEffect to update currentAnimation when animations change
+  useEffect(() => {
+    if (modelRef.current && mixerRef.current) {
+      const runningActions = Object.entries(animationsLoaded).filter(([_, action]) => action.isRunning())
+      if (runningActions.length > 0) {
+        modelRef.current.currentAnimation = runningActions[0][0]
+      } else {
+        modelRef.current.currentAnimation = null
+      }
+    }
+  }, [animationsLoaded])
 
   if (!model) return null
 

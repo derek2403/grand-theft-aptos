@@ -25,95 +25,105 @@ export default async function handler(req, res) {
     return res.status(405).json({ message: 'Method not allowed' })
   }
 
-  if (!process.env.OPENAI_API_KEY) {
-    return res.status(500).json({ error: 'OpenAI API key is not configured' })
-  }
-
   const { character, otherCharacters, availableActions } = req.body
 
   try {
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "gpt-4o",
       messages: [
         {
           role: "system",
-          content: `You are an AI that generates varied and realistic actions for characters in a simulation.
-          Rules for generating actions:
-          1. Return exactly 3 actions in a JSON array
-          2. Mix up the action types - don't always use the same sequence
-          3. Consider the character's MBTI and needs when choosing actions
-          4. For talkTo actions:
-             - Use character names instead of IDs
-             - Consider personality compatibility
-             - Ensure meaningful interactions
-          5. Make actions contextually appropriate
-          6. Vary the locations and animations used
-          7. Create a natural flow between actions
-          8. Use 'wander' for exploratory behavior`
+          content: "You are a JSON generator that creates exactly 3 actions for a character in a simulation game. Always return a valid JSON array containing exactly 3 actions, no more, no less. Each action must strictly follow the specified format with exact property names. Do not include any explanation or markdown formatting."
         },
         {
           role: "user",
-          content: `Generate 3 RANDOM-ORDER actions for ${character.name} based on their profile:
+          content: `Generate exactly 3 actions for ${character.name}. Valid action types are ONLY:
+          1. "goto" with "checkpoint" property
+          2. "animation" with "animation" property (IMPORTANT: type must be exactly "animation", not "animations")
+          3. "talkTo" with "targetName" property (IMPORTANT: targetName must be one of the provided character names)
+          4. "wander" (no additional properties needed)
+
+          Available options:
+          - Checkpoints: ${JSON.stringify(availableActions.goto)}
+          - Animations: ${JSON.stringify(availableActions.animations)}
+          - Target Characters (for talkTo): ${otherCharacters.map(c => c.name).join(', ')}
+
+          Character info:
           - MBTI: ${character.mbti}
           - Needs: ${JSON.stringify(character.needs)}
           - Goals: ${JSON.stringify(character.goals)}
-          - Characteristics: ${JSON.stringify(character.characteristics)}
           
-          Current position: ${JSON.stringify(character.position)}
-          
-          Available actions:
-          - goto: ${JSON.stringify(availableActions.goto)}
-          - animations: ${JSON.stringify(availableActions.animations)}
-          - talkTo: ${otherCharacters.map(c => `${c.name} (${c.mbti})`).join(', ')}
-          - wander: explore the environment randomly
-          
-          Return ONLY a JSON array with 3 actions in this format:
-          [
-            { "type": "goto|animation|talkTo|wander", "checkpoint?": "location", "animation?": "animationName", "targetName?": "characterName" }
-          ]`
+          Example of valid response:
+          [{"type":"goto","checkpoint":"park"},{"type":"animation","animation":"wave"},{"type":"talkTo","targetName":"Alice"}]`
         }
       ],
-      temperature: 0.9,
+      temperature: 0.7,
       max_tokens: 500
     })
 
     let actions
     try {
-      actions = JSON.parse(completion.choices[0].message.content)
+      const content = completion.choices[0].message.content.trim()
+      console.log('Raw OpenAI response:', content)
+      
+      // Clean the response
+      const jsonString = content.replace(/```json\n?|```/g, '').trim()
+      console.log('Cleaned JSON string:', jsonString)
+      
+      actions = JSON.parse(jsonString)
+      
+      // Ensure we have an array with exactly 3 actions
+      if (!Array.isArray(actions) || actions.length !== 3) {
+        throw new Error('Response must be an array with exactly 3 actions')
+      }
+
+      // Fix and validate each action
+      actions = actions.map(action => {
+        // Fix common type errors
+        if (action.type === 'animations') {
+          action.type = 'animation'
+        }
+
+        // Validate the action
+        switch (action.type) {
+          case 'goto':
+            if (!action.checkpoint || !availableActions.goto.includes(action.checkpoint)) {
+              throw new Error(`Invalid checkpoint: ${action.checkpoint}`)
+            }
+            break
+          case 'animation':
+            if (!action.animation || !availableActions.animations.includes(action.animation)) {
+              throw new Error(`Invalid animation: ${action.animation}`)
+            }
+            break
+          case 'talkTo':
+            if (!action.targetName) {
+              throw new Error('Missing targetName for talkTo action')
+            }
+            if (!otherCharacters.some(c => c.name === action.targetName)) {
+              throw new Error(`Invalid target name: ${action.targetName}`)
+            }
+            break
+          case 'wander':
+            // Wander is always valid
+            break
+          default:
+            throw new Error(`Invalid action type: ${action.type}`)
+        }
+        return action
+      })
+
     } catch (error) {
-      console.error('Invalid JSON from OpenAI:', completion.choices[0].message.content)
-      return res.status(500).json({ error: 'Invalid response from OpenAI' })
+      console.error('Validation Error:', error)
+      console.error('OpenAI Response:', completion.choices[0].message.content)
+      return res.status(500).json({ error: `Invalid response format: ${error.message}` })
     }
 
-    // Validate the actions format
-    if (!Array.isArray(actions) || actions.length !== 3) {
-      return res.status(500).json({ error: 'Invalid actions format from OpenAI' })
-    }
-
-    // Validate each action
-    const validActions = actions.every(action => {
-      if (action.type === 'goto') {
-        return typeof action.checkpoint === 'string' && availableActions.goto.includes(action.checkpoint)
-      }
-      if (action.type === 'animation') {
-        return typeof action.animation === 'string' && availableActions.animations.includes(action.animation)
-      }
-      if (action.type === 'talkTo') {
-        return typeof action.targetName === 'string' && otherCharacters.some(c => c.name === action.targetName)
-      }
-      if (action.type === 'wander') {
-        return true // Wander action doesn't need additional parameters
-      }
-      return false
-    })
-
-    if (!validActions) {
-      return res.status(500).json({ error: 'Invalid action format from OpenAI' })
-    }
-
+    console.log('Final validated actions:', actions)
     return res.status(200).json({ actions })
+
   } catch (error) {
-    console.error('Error:', error)
-    return res.status(500).json({ error: 'Error generating actions' })
+    console.error('OpenAI Error:', error)
+    return res.status(500).json({ error: error.message || 'Error generating actions' })
   }
 } 

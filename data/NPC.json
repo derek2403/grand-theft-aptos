@@ -1,3 +1,35 @@
 {
-  "characters": []
+  "characters": [
+    {
+      "name": "아이유(IU)",
+      "occupation": "K-pop artist and songwriter",
+      "mbti": "ENFJ",
+      "hobby": "music, performing arts, engaging with fans",
+      "gender": "female",
+      "characteristics": [
+        "charismatic",
+        "empathetic",
+        "creative",
+        "dedicated",
+        "inspiring"
+      ],
+      "goals": [
+        "to connect with fans through music",
+        "to create memorable performances",
+        "to continuously innovate in her artistry"
+      ],
+      "needs": {
+        "hunger": 80,
+        "energy": 80,
+        "social": 80,
+        "happiness": 80
+      },
+      "id": 1739982096196,
+      "position": [
+        -1.2477812720500059,
+        0,
+        -2.7521226414512934
+      ]
+    }
+  ]
 }

@@ -16,22 +16,6 @@ export default function Home() {
   const [characters, setCharacters] = useState([])
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showCharactersList, setShowCharactersList] = useState(false)
-  const [characterForm, setCharacterForm] = useState({
-    name: '',
-    occupation: '',
-    mbti: '',
-    age: '',
-    hobby: '',
-    gender: '',
-    characteristics: ['', '', '', '', ''],
-    goals: ['', '', ''],
-    needs: {
-      hunger: '',
-      energy: '',
-      social: '',
-      happiness: ''
-    }
-  })
   const [timeState, setTimeState] = useState({
     timeOfDay: 'day',
     dayProgress: 0.5,
@@ -95,22 +79,6 @@ export default function Home() {
     }
 
     setShowCreateModal(false)
-    setCharacterForm({
-      name: '',
-      occupation: '',
-      mbti: '',
-      age: '',
-      hobby: '',
-      gender: '',
-      characteristics: ['', '', '', '', ''],
-      goals: ['', '', ''],
-      needs: {
-        hunger: 50,
-        energy: 70,
-        social: 30,
-        happiness: 80
-      }
-    })
   }
 
   const renderCharacter = (character) => {
@@ -182,6 +150,7 @@ export default function Home() {
       <CreateCharacterModal
         showModal={showCreateModal}
         onClose={() => setShowCreateModal(false)}
+        onSubmit={handleCreateCharacter}
       />
 
     </div>
