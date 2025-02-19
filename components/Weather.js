@@ -19,7 +19,11 @@ function RainDrop({ position }) {
   })
 
   return (
-    <mesh ref={meshRef} position={position}>
+    <mesh 
+      ref={meshRef} 
+      position={position}
+      userData={{ type: 'decoration' }}
+    >
       <boxGeometry args={[0.1, 0.1, 0.1]} />
       <meshStandardMaterial color="#68c8ff" transparent opacity={0.6} />
     </mesh>
@@ -29,15 +33,15 @@ function RainDrop({ position }) {
 function Cloud({ position }) {
   return (
     <group position={position}>
-      <mesh>
+      <mesh userData={{ type: 'decoration' }}>
         <sphereGeometry args={[2, 16, 16]} />
         <meshStandardMaterial color="#c2c2c2" transparent opacity={0.8} />
       </mesh>
-      <mesh position={[1.5, 0, 0]}>
+      <mesh position={[1.5, 0, 0]} userData={{ type: 'decoration' }}>
         <sphereGeometry args={[1.5, 16, 16]} />
         <meshStandardMaterial color="#c2c2c2" transparent opacity={0.8} />
       </mesh>
-      <mesh position={[-1.5, 0, 0]}>
+      <mesh position={[-1.5, 0, 0]} userData={{ type: 'decoration' }}>
         <sphereGeometry args={[1.5, 16, 16]} />
         <meshStandardMaterial color="#c2c2c2" transparent opacity={0.8} />
       </mesh>

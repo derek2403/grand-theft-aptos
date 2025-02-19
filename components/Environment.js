@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { useTexture } from '@react-three/drei'
 import { useState, useEffect, useRef } from 'react'
-import { House } from './House'
+
 import { Landscape } from './Landscape'
 import { Weather } from './Weather'
 import { TimeSimulation } from '../utils/TimeSimulation'
@@ -95,21 +95,17 @@ export function Environment({ weatherType = 'sunny' }) {
         castShadow
       />
 
-      {/* Grass ground */}
+      {/* Grass ground - explicitly mark as non-collider */}
       <mesh 
         rotation={[-Math.PI / 2, 0, 0]} 
         position={[0, GROUND_HEIGHT, 0]} 
         receiveShadow
+        userData={{ type: 'decoration' }}
       >
         <planeGeometry args={[GROUND_SIZE, GROUND_SIZE]} />
-        <meshStandardMaterial 
-          map={grassTexture}
-          roughness={1}
-          metalness={0}
-        />
+        <meshStandardMaterial map={grassTexture} roughness={1} metalness={0} />
       </mesh>
 
-      <House timeOfDay={timeState.timeOfDay} />
       <Landscape />
       <Weather type={weatherType} timeOfDay={timeState.timeOfDay} />
     </group>

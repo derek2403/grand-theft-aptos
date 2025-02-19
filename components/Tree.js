@@ -12,13 +12,22 @@ export function Tree({ position = [0, 0, 0] }) {
   return (
     <group position={position}>
       {/* Tree trunk */}
-      <mesh position={[0, 3, 0]} castShadow receiveShadow>
+      <mesh 
+        position={[0, 3, 0]} 
+        castShadow 
+        receiveShadow
+        userData={{ type: 'decoration' }}
+      >
         <cylinderGeometry args={[0.4, 0.6, 6, 8]} />
         <meshStandardMaterial map={trunkTexture} roughness={0.9} />
       </mesh>
       
       {/* Tree leaves */}
-      <mesh position={[0, 7, 0]} castShadow>
+      <mesh 
+        position={[0, 7, 0]} 
+        castShadow
+        userData={{ type: 'decoration' }}
+      >
         <coneGeometry args={[3, 6, 8]} />
         <meshStandardMaterial 
           map={leavesTexture} 

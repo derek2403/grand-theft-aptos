@@ -14,8 +14,8 @@ const SKY_COLORS = {
 
 const Scene = () => {
   const [weather, setWeather] = useState('sunny')
-  const CAMERA_POSITION = [30, 20, 30]
-  const CAMERA_FOV = 45
+  const CAMERA_POSITION = [20, 20, 20] // Adjusted for isometric view
+  const CAMERA_FOV = 50
   const CAMERA_TARGET = [0, 0, 0]
 
   // Weather control handler
@@ -36,7 +36,8 @@ const Scene = () => {
       camera={{ 
         position: CAMERA_POSITION,
         fov: CAMERA_FOV,
-        // Lock the camera by setting up initial target
+        near: 0.1,
+        far: 1000,
         lookAt: CAMERA_TARGET
       }}
       shadows
@@ -63,6 +64,19 @@ const Scene = () => {
           castShadow
           shadow-mapSize-width={2048}
           shadow-mapSize-height={2048}
+        />
+        
+        <OrbitControls
+          target={CAMERA_TARGET}
+          maxPolarAngle={Math.PI / 2.5}
+          minPolarAngle={Math.PI / 3} // Restrict vertical rotation
+          maxAzimuthAngle={Math.PI / 2} // Restrict horizontal rotation
+          minAzimuthAngle={-Math.PI / 2}
+          enableZoom={true}
+          enablePan={true}
+          zoomSpeed={0.5}
+          minDistance={10}
+          maxDistance={50}
         />
         
         {/* Remove EnvironmentMap when it's not sunny */}
