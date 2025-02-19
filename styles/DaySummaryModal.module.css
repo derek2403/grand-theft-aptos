@@ -23,17 +23,17 @@
 }
 
 .modalContainer {
-  background: #1a1a1a;
-  padding: 1.5rem 2rem;
-  border-radius: 1rem;
+  background: #111827;
+  padding: 2rem;
+  border-radius: 1.25rem;
   width: 95%;
-  height: 90vh;
-  max-height: 800px;
+  max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
   font-family: 'Inter', sans-serif;
-  transform: scale(0.95);
-  transition: transform 0.3s ease-in-out;
   color: #fff;
 }
 
@@ -42,81 +42,88 @@
 }
 
 .title {
-  font-size: 1.75rem;
-  font-weight: 700;
-  margin-bottom: 0.25rem;
-  color: #fff;
+  font-size: 2rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #fff 0%, #e5e7eb 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
   letter-spacing: -0.025em;
 }
 
 .subtitle {
-  font-size: 1rem;
+  font-size: 1.1rem;
   color: #9ca3af;
-  margin-bottom: 1rem;
-  font-weight: 500;
+  margin-top: 0.25rem;
 }
 
 .weatherInfo {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 1rem;
-  padding: 0.75rem 1rem;
-  background: linear-gradient(to right, #2d2d2d, #333333);
+  align-items: center;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0.75rem 1.5rem;
   border-radius: 0.75rem;
-  font-weight: 500;
-  color: #e5e7eb;
+  margin: 0.5rem 0 1.5rem;
+  backdrop-filter: blur(8px);
+}
+
+.weatherInfo span {
+  font-size: 0.95rem;
+  color: #d1d5db;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .content {
-  margin-bottom: 1rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .summaryGrid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 1rem;
-  margin-bottom: 1rem;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
 }
 
 .summaryItem {
-  background: #2d2d2d;
-  padding: 1rem;
-  border-radius: 0.75rem;
-  border: 1px solid #404040;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  height: 100%;
-}
-
-.summaryItem:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
-  background: #333333;
+  padding: 1.5rem;
+  border-radius: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  backdrop-filter: blur(8px);
+  border-width: 1px;
+  transition: all 0.2s ease-in-out;
 }
 
 .summaryItem h3 {
-  font-size: 1.1rem;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-  color: #fff;
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
 }
 
 .agentSpecialty {
-  color: #9ca3af;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
+  opacity: 0.8;
   font-weight: 500;
 }
 
 .metrics {
-  margin-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .metrics p {
-  margin: 0.25rem 0;
-  color: #d1d5db;
-  font-size: 0.85rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  font-size: 0.9rem;
+  color: #d1d5db;
 }
 
 .positive {
@@ -125,59 +132,70 @@
 }
 
 .negative {
-  color: #f87171;
+  color: #fb7185;
   font-weight: 600;
 }
 
 .sparkline {
-  margin-top: 0.75rem;
+  margin-top: auto;
   padding-top: 0.75rem;
-  border-top: 1px solid #404040;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .sparklineLabel {
-  font-size: 0.75rem;
-  color: #9ca3af;
-  margin-bottom: 0.25rem;
+  font-size: 0.8rem;
+  margin-bottom: 0.5rem;
+  opacity: 0.8;
 }
 
 .additionalInfo {
-  background: #2d2d2d;
-  padding: 1rem;
-  border-radius: 0.75rem;
-  margin-top: 1rem;
+  background: rgba(17, 24, 39, 0.8);
+  padding: 2.5rem;
+  border-radius: 1.25rem;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  margin: 2rem 0;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
 .additionalInfo h3 {
-  color: #fff;
-  font-size: 1rem;
+  font-size: 1.4rem;
   font-weight: 600;
-  margin-bottom: 0.5rem;
+  margin-bottom: 1.75rem;
+  color: #f3f4f6;
+  letter-spacing: -0.025em;
+}
+
+.insights {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
 }
 
 .insights p {
-  color: #d1d5db;
-  margin: 0.25rem 0;
-  font-size: 0.85rem;
+  font-size: 1rem;
+  color: #e5e7eb;
+  padding: 1.25rem 1.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .modalActions {
   display: flex;
   justify-content: flex-end;
-  gap: 1rem;
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid #404040;
+  gap: 1.25rem;
+  margin-top: 2rem;
+  padding: 2rem;
+  border-top: 2px solid rgba(255, 255, 255, 0.1);
 }
 
 .primaryButton, .secondaryButton {
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
+  padding: 0.875rem 1.75rem;
+  font-size: 0.95rem;
   font-weight: 500;
-  font-size: 0.85rem;
+  border-radius: 0.75rem;
   transition: all 0.2s ease;
-  cursor: pointer;
-  border: none;
 }
 
 .primaryButton {
@@ -187,18 +205,27 @@
 
 .primaryButton:hover {
   background: #2563eb;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.3);
 }
 
 .secondaryButton {
-  background: #374151;
+  background: rgba(255, 255, 255, 0.1);
   color: #e5e7eb;
 }
 
 .secondaryButton:hover {
-  background: #4b5563;
-  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+@media (max-width: 768px) {
+  .modalActions {
+    flex-direction: column;
+    padding: 1rem;
+  }
+
+  .primaryButton, .secondaryButton {
+    width: 100%;
+    padding: 0.75rem 1rem;
+  }
 }
 
 /* Custom scrollbar */
@@ -222,8 +249,8 @@
 
 /* Player Card Theme */
 .player {
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-  border: 1px solid #2563eb;
+  background: linear-gradient(135deg, #1e1b4b 0%, #172554 100%);
+  border-color: #3b82f6;
 }
 
 .player:hover {
@@ -237,8 +264,8 @@
 
 /* Phil Card Theme */
 .phil {
-  background: linear-gradient(135deg, #1e1e1e 0%, #2d1f3d 100%);
-  border: 1px solid #8b5cf6;
+  background: linear-gradient(135deg, #2e1065 0%, #4c1d95 100%);
+  border-color: #8b5cf6;
 }
 
 .phil:hover {
@@ -252,8 +279,8 @@
 
 /* IU Card Theme */
 .iu {
-  background: linear-gradient(135deg, #1e1e1e 0%, #3d1f2d 100%);
-  border: 1px solid #ec4899;
+  background: linear-gradient(135deg, #831843 0%, #9d174d 100%);
+  border-color: #ec4899;
 }
 
 .iu:hover {
@@ -267,8 +294,8 @@
 
 /* Leonardo Card Theme */
 .leonardo {
-  background: linear-gradient(135deg, #1e1e1e 0%, #1f3d2d 100%);
-  border: 1px solid #10b981;
+  background: linear-gradient(135deg, #064e3b 0%, #065f46 100%);
+  border-color: #10b981;
 }
 
 .leonardo:hover {

@@ -64,14 +64,16 @@ export default function DaySummaryModal({ isOpen, onClose, dayData }) {
       aria-labelledby="modal-title"
     >
       <div className={styles.modalContainer}>
-        <h2 id="modal-title" className={styles.title}>Day Summary</h2>
-        <p className={styles.subtitle}>
-          Day {dayData.day} - {dayData.date}
-        </p>
-        
-        <div className={styles.weatherInfo}>
-          <span>Weather: {dayData.weather}</span>
-          <span>Market Sentiment: {dayData.marketSentiment}</span>
+        <div>
+          <h2 id="modal-title" className={styles.title}>Day Summary</h2>
+          <p className={styles.subtitle}>
+            Day {dayData.day} - {dayData.date}
+          </p>
+          
+          <div className={styles.weatherInfo}>
+            <span>Weather: {dayData.weather}</span>
+            <span>Market Sentiment: {dayData.marketSentiment}</span>
+          </div>
         </div>
 
         <div className={styles.content}>
@@ -90,21 +92,21 @@ export default function DaySummaryModal({ isOpen, onClose, dayData }) {
               <p>Strategy: {dayData.topAgent.strategy}</p>
             </div>
           </div>
-        </div>
 
-        <div className={styles.modalActions}>
-          <button 
-            className={styles.primaryButton}
-            onClick={onClose}
-          >
-            Continue to Next Day
-          </button>
-          <button 
-            className={styles.secondaryButton}
-            onClick={() => {/* Implement detailed report view */}}
-          >
-            View Detailed Report
-          </button>
+          <div className={styles.modalActions}>
+            <button 
+              className={styles.primaryButton}
+              onClick={onClose}
+            >
+              Continue to Next Day
+            </button>
+            <button 
+              className={styles.secondaryButton}
+              onClick={() => {/* Implement detailed report view */}}
+            >
+              View Detailed Report
+            </button>
+          </div>
         </div>
       </div>
     </div>
