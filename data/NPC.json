@@ -63,6 +63,38 @@
         0,
         -1.712674055564487
       ]
+    },
+    {
+      "name": "Michael O'Connor",
+      "occupation": "Entrepreneur",
+      "mbti": "ENTP",
+      "age": 35,
+      "hobby": "Rock Climbing",
+      "gender": "male",
+      "characteristics": [
+        "Adventurous",
+        "Quick-witted",
+        "Confident",
+        "Adaptable",
+        "Resourceful"
+      ],
+      "needs": {
+        "hunger": 50,
+        "energy": 70,
+        "social": 30,
+        "happiness": 80
+      },
+      "goals": [
+        "Learn AI",
+        "Make new friends",
+        "Buy a house"
+      ],
+      "id": 1739951516356,
+      "position": [
+        -1.036715297679962,
+        0,
+        -4.35622299825641
+      ]
     }
   ]
 }

@@ -8,6 +8,9 @@ export function CharacterControlTest({ characters }) {
   const [selectedCheckpoint, setSelectedCheckpoint] = useState('')
   const [selectedAnimation, setSelectedAnimation] = useState('')
   const [targetCharacter, setTargetCharacter] = useState(null)
+  const [actionQueue, setActionQueue] = useState([])
+  const [isExecuting, setIsExecuting] = useState(false)
+  const [showDoneMessage, setShowDoneMessage] = useState(false)
 
   const animations = [
     'Dancing',
@@ -36,46 +39,136 @@ export function CharacterControlTest({ characters }) {
     console.log('Current Position:', position)
   }
 
+  const executeQueuedActions = async () => {
+    if (isExecuting || actionQueue.length === 0) return
+
+    setIsExecuting(true)
+    setShowDoneMessage(false)
+
+    for (const action of actionQueue) {
+      switch (action.type) {
+        case 'goto':
+          await new Promise((resolve) => {
+            const movement = goto(action.character.name, action.checkpoint, {
+              playAnimation: (name) => {
+                if (action.character.animations?.[name]) {
+                  Object.values(action.character.animations).forEach(anim => {
+                    anim.fadeOut(0.2)
+                  })
+                  action.character.animations[name].reset().fadeIn(0.2).play()
+                }
+              },
+              onComplete: () => {
+                if (action.character.ref.current) {
+                  action.character.ref.current.activeGoto = null
+                }
+              }
+            })
+            if (movement) {
+              action.character.ref.current.activeGoto = movement
+            }
+            // Hard code 5 second duration
+            setTimeout(resolve, 5000)
+          })
+          break
+        case 'animation':
+          await new Promise(resolve => {
+            playAnimation(action.character.name, action.animation, {
+              playAnimation: (name) => {
+                if (action.character.animations?.[name]) {
+                  Object.values(action.character.animations).forEach(anim => {
+                    anim.fadeOut(0.2)
+                  })
+                  action.character.animations[name].reset().fadeIn(0.2).play()
+                }
+              }
+            })
+            // Hard code 5 second duration
+            setTimeout(resolve, 5000)
+          })
+          break
+        case 'talkTo':
+          await new Promise(resolve => {
+            const interaction = talkTo(
+              action.character.name,
+              action.target.name,
+              {
+                playAnimation: (name) => {
+                  if (action.character.animations?.[name]) {
+                    Object.values(action.character.animations).forEach(anim => {
+                      anim.fadeOut(0.2)
+                    })
+                    action.character.animations[name].reset().fadeIn(0.2).play()
+                  }
+                }
+              },
+              {
+                playAnimation: (name) => {
+                  if (action.target.animations?.[name]) {
+                    Object.values(action.target.animations).forEach(anim => {
+                      anim.fadeOut(0.2)
+                    })
+                    action.target.animations[name].reset().fadeIn(0.2).play()
+                  }
+                }
+              }
+            )
+            if (interaction) {
+              const sharedInteraction = {
+                update: (model, delta) => {
+                  return interaction.update(
+                    action.character.ref.current,
+                    action.target.ref.current,
+                    delta
+                  )
+                }
+              }
+              action.character.ref.current.activeGoto = sharedInteraction
+              action.target.ref.current.activeGoto = sharedInteraction
+            }
+            // Hard code 5 second duration
+            setTimeout(() => {
+              if (action.character.ref.current) {
+                action.character.ref.current.activeGoto = null
+              }
+              if (action.target.ref.current) {
+                action.target.ref.current.activeGoto = null
+              }
+              resolve()
+            }, 5000)
+          })
+          break
+      }
+    }
+
+    setActionQueue([])
+    setShowDoneMessage(true)
+    setTimeout(() => {
+      setShowDoneMessage(false)
+      setIsExecuting(false)
+    }, 3000)
+  }
+
   const handleGoto = () => {
     if (!selectedCharacter?.ref?.current || !selectedCheckpoint) return
-    
-    const movement = goto(
-      selectedCharacter.name, 
-      selectedCheckpoint, 
-      {
-        playAnimation: (name) => {
-          if (selectedCharacter.animations?.[name]) {
-            selectedCharacter.animations[name].reset().fadeIn(0.2).play()
-          }
-        }
-      }
-    )
+    if (actionQueue.length >= 3) return
 
-    if (movement) {
-      // Store the movement update function in the character's ref
-      selectedCharacter.ref.current.activeGoto = movement
-    }
+    setActionQueue(prev => [...prev, {
+      type: 'goto',
+      character: selectedCharacter,
+      checkpoint: selectedCheckpoint
+    }])
   }
 
   const handlePlayAnimation = () => {
     if (!selectedCharacter || !selectedAnimation) return
+    if (actionQueue.length >= 3) return
 
-    playAnimation(
-      selectedCharacter.name,
-      selectedAnimation,
-      {
-        playAnimation: (name) => {
-          if (selectedCharacter.animations?.[name]) {
-            // Stop any current animations
-            Object.values(selectedCharacter.animations).forEach(anim => {
-              anim.fadeOut(0.2)
-            })
-            // Play new animation
-            selectedCharacter.animations[name].reset().fadeIn(0.2).play()
-          }
-        }
-      }
-    )
+    setActionQueue(prev => [...prev, {
+      type: 'animation',
+      character: selectedCharacter,
+      animation: selectedAnimation
+    }])
   }
 
   const handleWander = () => {
@@ -99,52 +192,17 @@ export function CharacterControlTest({ characters }) {
 
   const handleTalkTo = () => {
     if (!selectedCharacter?.ref?.current || !targetCharacter?.ref?.current) return
+    if (actionQueue.length >= 3) return
 
-    const interaction = talkTo(
-      selectedCharacter.name,
-      targetCharacter.name,
-      {
-        playAnimation: (name) => {
-          if (selectedCharacter.animations?.[name]) {
-            Object.values(selectedCharacter.animations).forEach(anim => {
-              anim.fadeOut(0.2)
-            })
-            selectedCharacter.animations[name].reset().fadeIn(0.2).play()
-          }
-        }
-      },
-      {
-        playAnimation: (name) => {
-          if (targetCharacter.animations?.[name]) {
-            Object.values(targetCharacter.animations).forEach(anim => {
-              anim.fadeOut(0.2)
-            })
-            targetCharacter.animations[name].reset().fadeIn(0.2).play()
-          }
-        }
-      }
-    )
-
-    if (interaction) {
-      // Set up the interaction for both characters
-      const sharedInteraction = {
-        update: (model, delta) => {
-          return interaction.update(
-            selectedCharacter.ref.current,
-            targetCharacter.ref.current,
-            delta
-          )
-        }
-      }
-      
-      // Assign the same interaction to both characters
-      selectedCharacter.ref.current.activeGoto = sharedInteraction
-      targetCharacter.ref.current.activeGoto = sharedInteraction
-    }
+    setActionQueue(prev => [...prev, {
+      type: 'talkTo',
+      character: selectedCharacter,
+      target: targetCharacter
+    }])
   }
 
   return (
-    <div className="absolute bottom-4 left-4 bg-white p-4 rounded-lg shadow-lg w-80">
+    <div className="fixed bottom-4 left-4 bg-white p-4 rounded-lg shadow-lg w-80 max-h-[90vh] overflow-y-auto">
       <h3 className="text-lg font-bold mb-4">Character Control Test</h3>
       
       {/* Character Selection */}
@@ -276,6 +334,40 @@ export function CharacterControlTest({ characters }) {
           Talk to Character
         </button>
       </div>
+
+      {/* Add Queue Display and Execute Button */}
+      <div className="mb-4">
+        <h4 className="text-sm font-medium mb-2">Action Queue ({actionQueue.length}/3):</h4>
+        <div className="bg-gray-100 p-2 rounded mb-2 min-h-[60px]">
+          {actionQueue.map((action, index) => (
+            <div key={index} className="text-sm">
+              {action.type === 'goto' && `${index + 1}. Go to ${action.checkpoint}`}
+              {action.type === 'animation' && `${index + 1}. Play ${action.animation}`}
+              {action.type === 'talkTo' && `${index + 1}. Talk to ${action.target.name}`}
+            </div>
+          ))}
+        </div>
+        <button
+          className="bg-red-500 text-white px-4 py-2 rounded w-full mb-2"
+          onClick={() => setActionQueue([])}
+          disabled={actionQueue.length === 0 || isExecuting}
+        >
+          Clear Queue
+        </button>
+        <button
+          className="bg-blue-500 text-white px-4 py-2 rounded w-full"
+          onClick={executeQueuedActions}
+          disabled={actionQueue.length === 0 || isExecuting}
+        >
+          Execute Queue
+        </button>
+      </div>
+
+      {showDoneMessage && (
+        <div className="text-green-500 text-center font-medium">
+          All actions completed!
+        </div>
+      )}
     </div>
   )
 } 
