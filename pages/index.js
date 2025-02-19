@@ -10,6 +10,8 @@ import { CharactersListModal } from '../components/CharactersListModal'
 import { TimeSimulation } from '../utils/TimeSimulation'
 import weatherConfigs from '../config/weather.json'
 import { CharacterControlTest } from '../components/CharacterControlTest'
+import Head from 'next/head'
+import Link from 'next/link'
 
 export default function Home() {
   const [weather, setWeather] = useState('sunny')
@@ -98,80 +100,96 @@ export default function Home() {
   }
 
   return (
-    <div className="w-full h-screen relative">
-      <Canvas
-        shadows
-        camera={{
-          position: [20, 200, 20],
-          fov: 50,
-          near: 0.1,
-          far: 1000
-        }}
+    <>
+      <Head>
+        <title>Grand Theft Aptos - Game</title>
+        <meta name="description" content="Play Grand Theft Aptos - The AI-powered open world game" />
+        <link rel="icon" href="/favicon.ico" />
+      </Head>
+
+      {/* Add Landing Page Link */}
+      <Link 
+        href="/landingpage"
+        className="fixed top-4 right-4 z-50 bg-primary text-white px-4 py-2 rounded-full hover:bg-opacity-90 transition-all"
       >
-        <color attach="background" args={['#87CEEB']} /> {/* Sunny sky blue */}
-        
-        <Suspense fallback={null}>
-          <ambientLight intensity={1} />
-          <directionalLight
-            position={[10, 10, 5]}
-            intensity={1.5}
-            castShadow
-            shadow-mapSize-width={2048}
-            shadow-mapSize-height={2048}
-          />
-          
-          {characters.map(character => renderCharacter(character))}
-          <Environment weatherType="sunny" timeState={{ timeOfDay: 'day', dayProgress: 0.5 }} />
-          
-          <OrbitControls
-            target={[0, 0, 0]}
-            maxPolarAngle={Math.PI / 2.5}
-            minPolarAngle={Math.PI / 3}
-            maxAzimuthAngle={Math.PI / 2}
-            minAzimuthAngle={-Math.PI / 2}
-            enableZoom={true}
-            enablePan={true}
-            zoomSpeed={0.5}
-            minDistance={10}
-            maxDistance={50}
-          />
-          
-          <EnvironmentMap preset="sunset" />
-        </Suspense>
-      </Canvas>
+        View Landing Page
+      </Link>
 
-      {/* Top Bar Controls */}
-      <div className="absolute top-4 left-4 flex gap-4">
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="bg-green-500 text-white p-2 rounded hover:bg-green-600"
+      <div className="w-full h-screen relative">
+        <Canvas
+          shadows
+          camera={{
+            position: [20, 200, 20],
+            fov: 50,
+            near: 0.1,
+            far: 1000
+          }}
         >
-          Create Character
-        </button>
-        <button
-          onClick={() => setShowCharactersList(true)}
-          className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
-        >
-          Show Characters
-        </button>
+          <color attach="background" args={['#87CEEB']} /> {/* Sunny sky blue */}
+          
+          <Suspense fallback={null}>
+            <ambientLight intensity={1} />
+            <directionalLight
+              position={[10, 10, 5]}
+              intensity={1.5}
+              castShadow
+              shadow-mapSize-width={2048}
+              shadow-mapSize-height={2048}
+            />
+            
+            {characters.map(character => renderCharacter(character))}
+            <Environment weatherType="sunny" timeState={{ timeOfDay: 'day', dayProgress: 0.5 }} />
+            
+            <OrbitControls
+              target={[0, 0, 0]}
+              maxPolarAngle={Math.PI / 2.5}
+              minPolarAngle={Math.PI / 3}
+              maxAzimuthAngle={Math.PI / 2}
+              minAzimuthAngle={-Math.PI / 2}
+              enableZoom={true}
+              enablePan={true}
+              zoomSpeed={0.5}
+              minDistance={10}
+              maxDistance={50}
+            />
+            
+            <EnvironmentMap preset="sunset" />
+          </Suspense>
+        </Canvas>
+
+        {/* Top Bar Controls */}
+        <div className="absolute top-4 left-4 flex gap-4">
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="bg-green-500 text-white p-2 rounded hover:bg-green-600"
+          >
+            Create Character
+          </button>
+          <button
+            onClick={() => setShowCharactersList(true)}
+            className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
+          >
+            Show Characters
+          </button>
+        </div>
+
+        {/* Modals */}
+        <CreateCharacterModal
+          showModal={showCreateModal}
+          onClose={() => setShowCreateModal(false)}
+          onSubmit={handleCreateCharacter}
+          characterForm={characterForm}
+          setCharacterForm={setCharacterForm}
+        />
+
+        <CharactersListModal
+          showModal={showCharactersList}
+          onClose={() => setShowCharactersList(false)}
+          characters={characters}
+        />
+
+        <CharacterControlTest characters={characters} />
       </div>
-
-      {/* Modals */}
-      <CreateCharacterModal
-        showModal={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-        onSubmit={handleCreateCharacter}
-        characterForm={characterForm}
-        setCharacterForm={setCharacterForm}
-      />
-
-      <CharactersListModal
-        showModal={showCharactersList}
-        onClose={() => setShowCharactersList(false)}
-        characters={characters}
-      />
-
-      <CharacterControlTest characters={characters} />
-    </div>
+    </>
   )
 }
