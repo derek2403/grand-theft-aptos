@@ -1,15 +1,9 @@
-import React, { Suspense, useState } from 'react'
+import React, { useState } from 'react'
 import presets from '../data/presets.json'
-import { Canvas } from '@react-three/fiber'
-import { OrbitControls } from '@react-three/drei'
-import { Boy } from './Boy'
-import { Girl } from './Girl'
 
-export function CreateCharacterModal({ 
-  showModal, 
-  onClose, 
-  onSubmit, 
-  characterForm = {
+export function CreateCharacterModal({ showModal, onClose, onSubmit }) {
+  // Move state management inside the component
+  const [characterForm, setCharacterForm] = useState({
     name: '',
     occupation: '',
     mbti: '',
@@ -18,14 +12,12 @@ export function CreateCharacterModal({
     characteristics: ['', '', '', '', ''],
     goals: ['', '', ''],
     needs: {
-      hunger: 50,
-      energy: 70,
-      social: 30,
+      hunger: 80,
+      energy: 80,
+      social: 80,
       happiness: 80
     }
-  }, 
-  setCharacterForm 
-}) {
+  })
   const [twitterHandle, setTwitterHandle] = useState('')
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [error, setError] = useState('')
@@ -56,9 +48,10 @@ export function CreateCharacterModal({
       })
 
       const data = await response.json()
+      console.log('Twitter Analysis Response:', data)
       
-      if (data.success) {
-        setCharacterForm({
+      if (data.success && data.profile && data.analysis) {
+        const newCharacterForm = {
           name: data.profile.name || '',
           occupation: data.analysis.occupation || '',
           mbti: data.analysis.mbti || '',
@@ -67,18 +60,21 @@ export function CreateCharacterModal({
           characteristics: data.analysis.characteristics || ['', '', '', '', ''],
           goals: data.analysis.goals || ['', '', ''],
           needs: defaultNeeds
-        })
+        }
+        console.log('Setting character form:', newCharacterForm)
+        setCharacterForm(newCharacterForm)
       } else {
         setError(data.error || 'Failed to analyze Twitter profile')
       }
     } catch (error) {
+      console.error('Twitter Analysis Error:', error)
       setError('Failed to analyze Twitter profile')
     } finally {
       setIsAnalyzing(false)
     }
   }
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault()
     if (!characterForm.name || !characterForm.occupation || 
         !characterForm.mbti || !characterForm.hobby || 
@@ -88,105 +84,17 @@ export function CreateCharacterModal({
       alert("Please fill in all fields")
       return
     }
-
-    const newCharacter = {
-      ...characterForm,
-      id: Date.now(),
-      position: [Math.random() * 10 - 5, 0, Math.random() * 10 - 5]
-    }
-
-    // Save to NPC.json
-    try {
-      const response = await fetch('/api/saveCharacter', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(newCharacter),
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to save character')
-      }
-
-      // Reset form
-      setCharacterForm({
-        name: '',
-        occupation: '',
-        mbti: '',
-        age: '',
-        hobby: '',
-        gender: '',
-        characteristics: ['', '', '', '', ''],
-        goals: ['', '', ''],
-        needs: {
-          hunger: 50,
-          energy: 70,
-          social: 30,
-          happiness: 80
-        }
-      })
-
-      // Close modal and refresh page to load new character
-      onClose()
-      window.location.reload()
-
-    } catch (error) {
-      console.error('Error saving character:', error)
-      alert('Failed to save character. Please try again.')
-    }
+    onSubmit(characterForm)
   }
 
   const handleRandomize = () => {
     const randomIndex = Math.floor(Math.random() * presets.characters.length)
     const randomCharacter = {
       ...presets.characters[randomIndex],
-      needs: {
-        hunger: 50,
-        energy: 70,
-        social: 30,
-        happiness: 80
-      },
+      needs: defaultNeeds,
       goals: ["Learn AI", "Make new friends", "Buy a house"]
     }
     setCharacterForm(randomCharacter)
-  }
-
-  // Preview character component based on selected gender
-  const CharacterPreview = () => {
-    const previewCharacter = {
-      ...characterForm,
-      id: 'preview',
-      position: [0, 0, 0],
-      name: characterForm.name || 'Preview'
-    }
-
-    return (
-      <div className="w-full h-48 mb-4 bg-gray-100 rounded">
-        <Canvas
-          camera={{
-            position: [0, 2, 5],
-            fov: 50
-          }}
-        >
-          <ambientLight intensity={1} />
-          <directionalLight position={[10, 10, 5]} intensity={1.5} />
-          <Suspense fallback={null}>
-            {characterForm.gender.toLowerCase() === 'male' ? (
-              <Boy character={previewCharacter} />
-            ) : characterForm.gender.toLowerCase() === 'female' ? (
-              <Girl character={previewCharacter} />
-            ) : null}
-            <OrbitControls
-              enableZoom={false}
-              enablePan={false}
-              autoRotate
-              autoRotateSpeed={2}
-            />
-          </Suspense>
-        </Canvas>
-      </div>
-    )
   }
 
   if (!showModal) return null
