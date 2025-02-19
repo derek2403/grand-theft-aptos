@@ -178,14 +178,9 @@ export function NPCController() {
         }
       }
 
-      // Clear any existing animations and movement
-      if (character.ref?.current) {
+      // Clear any existing movement before starting new action
+      if (character.ref?.current?.activeGoto) {
         character.ref.current.activeGoto = null
-        if (character.animations) {
-          Object.values(character.animations).forEach(anim => {
-            anim.stop()
-          })
-        }
       }
 
       switch (action.type) {
@@ -194,45 +189,30 @@ export function NPCController() {
           chatLog.addMessage(messageData)
           
           if (character.ref?.current) {
-            character.ref.current.activeGoto = goto(
-              character.name,
-              action.checkpoint,
-              {
-                playAnimation: (name) => {
-                  if (character.animations?.[name]) {
-                    Object.values(character.animations).forEach(anim => {
-                      anim.stop()
-                    })
-                    character.animations[name].reset().fadeIn(0.2).play()
-                  }
+            const movement = goto(character.name, action.checkpoint, {
+              playAnimation: (name) => {
+                if (character.animations?.[name]) {
+                  // Use longer fade duration for smoother transitions
+                  character.animations[name].reset().fadeIn(0.5).play()
                 }
               }
-            )
+            })
 
-            // Add a timeout AND check for completion
-            let timeoutId = setTimeout(() => {
-              if (character.ref?.current) {
+            let isMoving = true
+            character.ref.current.activeGoto = movement
+
+            while (isMoving && character.ref?.current) {
+              const done = movement.update(character.ref.current, 1/60)
+              if (done) {
+                isMoving = false
                 character.ref.current.activeGoto = null
                 if (character.animations?.Stand) {
-                  character.animations.Stand.reset().fadeIn(0.2).play()
+                  character.animations.Stand.reset().fadeIn(0.5).play()
                 }
-                resolve()
               }
-            }, 5000)
-
-            // Check for completion every frame
-            const checkCompletion = () => {
-              if (!character.ref?.current?.activeGoto) {
-                clearTimeout(timeoutId)
-                if (character.animations?.Stand) {
-                  character.animations.Stand.reset().fadeIn(0.2).play()
-                }
-                resolve()
-                return
-              }
-              requestAnimationFrame(checkCompletion)
+              await new Promise(r => setTimeout(r, 16)) // ~60fps
             }
-            checkCompletion()
+            resolve()
           } else {
             resolve()
           }
@@ -243,18 +223,16 @@ export function NPCController() {
           chatLog.addMessage(messageData)
 
           if (character.animations?.[action.animation]) {
-            Object.values(character.animations).forEach(anim => {
-              anim.stop()
-            })
-            character.animations[action.animation].reset().fadeIn(0.2).play()
-          }
-
-          setTimeout(() => {
+            // Use longer fade duration for animations
+            character.animations[action.animation].reset().fadeIn(0.5).play()
+            
+            await new Promise(r => setTimeout(r, 3000))
+            
             if (character.animations?.Stand) {
-              character.animations.Stand.reset().fadeIn(0.2).play()
+              character.animations.Stand.reset().fadeIn(0.5).play()
             }
-            resolve()
-          }, 3000)
+          }
+          resolve()
           break
 
         case 'talkTo':
@@ -276,45 +254,28 @@ export function NPCController() {
           }
           chatLog.addMessage(messageData)
 
-          // Clear any existing animations for both characters
-          if (character.ref?.current) character.ref.current.activeGoto = null
-          if (targetChar.ref?.current) targetChar.ref.current.activeGoto = null
-
-          const interaction = talkTo(
-            character.name,
-            targetChar.name,
-            {
-              playAnimation: (name) => {
-                if (character.animations?.[name]) {
-                  Object.values(character.animations).forEach(anim => {
-                    anim.stop()
-                  })
-                  character.animations[name].reset().fadeIn(0.2).play()
+          if (character.ref?.current && targetChar.ref?.current) {
+            const interaction = talkTo(
+              character.name,
+              targetChar.name,
+              {
+                playAnimation: (name) => {
+                  if (character.animations?.[name]) {
+                    character.animations[name].reset().fadeIn(0.5).play()
+                  }
+                }
+              },
+              {
+                playAnimation: (name) => {
+                  if (targetChar.animations?.[name]) {
+                    targetChar.animations[name].reset().fadeIn(0.5).play()
+                  }
                 }
               }
-            },
-            {
-              playAnimation: (name) => {
-                if (targetChar.animations?.[name]) {
-                  Object.values(targetChar.animations).forEach(anim => {
-                    anim.stop()
-                  })
-                  targetChar.animations[name].reset().fadeIn(0.2).play()
-                }
-              }
-            }
-          )
+            )
 
-          let timeoutId = setTimeout(() => {
-            if (character.ref?.current) character.ref.current.activeGoto = null
-            if (targetChar.ref?.current) targetChar.ref.current.activeGoto = null
-            if (character.animations?.Stand) character.animations.Stand.reset().fadeIn(0.2).play()
-            if (targetChar.animations?.Stand) targetChar.animations.Stand.reset().fadeIn(0.2).play()
-            resolve()
-          }, 8000)
-
-          const updateInterval = setInterval(() => {
-            if (character.ref?.current && targetChar.ref?.current) {
+            let isInteracting = true
+            while (isInteracting && character.ref?.current && targetChar.ref?.current) {
               const done = interaction.update(
                 character.ref.current,
                 targetChar.ref.current,
@@ -322,16 +283,20 @@ export function NPCController() {
               )
 
               if (done) {
-                clearInterval(updateInterval)
-                clearTimeout(timeoutId)
-                if (character.ref?.current) character.ref.current.activeGoto = null
-                if (targetChar.ref?.current) targetChar.ref.current.activeGoto = null
-                if (character.animations?.Stand) character.animations.Stand.reset().fadeIn(0.2).play()
-                if (targetChar.animations?.Stand) targetChar.animations.Stand.reset().fadeIn(0.2).play()
-                resolve()
+                isInteracting = false
+                if (character.animations?.Stand) {
+                  character.animations.Stand.reset().fadeIn(0.5).play()
+                }
+                if (targetChar.animations?.Stand) {
+                  targetChar.animations.Stand.reset().fadeIn(0.5).play()
+                }
               }
+              await new Promise(r => setTimeout(r, 16)) // ~60fps
             }
-          }, 1000/60)
+            resolve()
+          } else {
+            resolve()
+          }
           break
 
         case 'wander':
@@ -339,31 +304,31 @@ export function NPCController() {
           chatLog.addMessage(messageData)
 
           if (character.ref?.current) {
-            const wanderMovement = wanderAround(
+            const movement = wanderAround(
               character.name,
               {
                 playAnimation: (name) => {
                   if (character.animations?.[name]) {
-                    Object.values(character.animations).forEach(anim => {
-                      anim.stop()
-                    })
-                    character.animations[name].reset().fadeIn(0.2).play()
+                    character.animations[name].reset().fadeIn(0.5).play()
                   }
                 }
               }
             )
 
-            character.ref.current.activeGoto = wanderMovement
+            character.ref.current.activeGoto = movement
+            let isWandering = true
+            let startTime = Date.now()
 
-            setTimeout(() => {
-              if (character.ref?.current) {
-                character.ref.current.activeGoto = null
-                if (character.animations?.Stand) {
-                  character.animations.Stand.reset().fadeIn(0.2).play()
-                }
-              }
-              resolve()
-            }, 10000)
+            while (isWandering && character.ref?.current && (Date.now() - startTime < 10000)) {
+              movement.update(character.ref.current, 1/60)
+              await new Promise(r => setTimeout(r, 16)) // ~60fps
+            }
+
+            character.ref.current.activeGoto = null
+            if (character.animations?.Stand) {
+              character.animations.Stand.reset().fadeIn(0.5).play()
+            }
+            resolve()
           } else {
             resolve()
           }
