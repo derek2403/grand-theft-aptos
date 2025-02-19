@@ -10,6 +10,8 @@ import { CharactersListModal } from '../components/CharactersListModal'
 import { TimeSimulation } from '../utils/TimeSimulation'
 import weatherConfigs from '../config/weather.json'
 import { CharacterControlTest } from '../components/CharacterControlTest'
+import DaySummaryModal from '../components/DaySummaryModal'
+import { useDaySummaryManager } from '../components/DaySummaryManager'
 
 export default function Home() {
   const [weather, setWeather] = useState('sunny')
@@ -39,6 +41,11 @@ export default function Home() {
     date: new Date()
   })
   const timeSimRef = useRef(new TimeSimulation(1000))
+
+  const { showDaySummary, setShowDaySummary, dayData } = useDaySummaryManager(
+    timeState, 
+    weather
+  )
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -98,7 +105,7 @@ export default function Home() {
   }
 
   return (
-    <div className="w-full h-screen relative">
+    <div className="relative w-screen h-screen">
       <Canvas
         shadows
         camera={{
@@ -154,6 +161,12 @@ export default function Home() {
         >
           Show Characters
         </button>
+        <button
+          onClick={() => setShowDaySummary(true)}
+          className="bg-purple-500 text-white p-2 rounded hover:bg-purple-600"
+        >
+          Show Day Summary
+        </button>
       </div>
 
       {/* Modals */}
@@ -172,6 +185,12 @@ export default function Home() {
       />
 
       <CharacterControlTest characters={characters} />
+
+      <DaySummaryModal
+        isOpen={showDaySummary}
+        onClose={() => setShowDaySummary(false)}
+        dayData={dayData}
+      />
     </div>
   )
 }
