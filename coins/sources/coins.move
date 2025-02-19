@@ -1,14 +1,17 @@
-module GTA_Coins {
+module coins1::coins1 {
     use std::signer;
-    use aptos_framework::coin;
-    use aptos_framework::account;
-    use aptos_framework::vector;
+    use std::vector;
     use aptos_framework::randomness;  // Import secure randomness
+
+    struct UserBalance has store, drop, copy {
+        user: address,
+        amount: u64
+    }
 
     struct CoinStorage has key {
         owner: address,
         total_supply: u64,
-        balances: vector<(address, u64)>,
+        balances: vector<UserBalance>,
         users: vector<address>,
     }
 
@@ -20,66 +23,36 @@ module GTA_Coins {
         user3: address
     ) {
         let owner = signer::address_of(account);
+        let user4 = owner; // The fourth user is the signer who starts the game
+
         let initial_balance: u64 = 100_000;
         let total_supply: u64 = 1_000_000;
-        let signer_addr = signer::address_of(account);
 
         move_to(account, CoinStorage {
             owner,
             total_supply,
             balances: vector[
-                (user1, initial_balance),
-                (user2, initial_balance),
-                (user3, initial_balance),
-                (signer_addr, initial_balance)
+                UserBalance { user: user1, amount: initial_balance },
+                UserBalance { user: user2, amount: initial_balance },
+                UserBalance { user: user3, amount: initial_balance },
+                UserBalance { user: user4, amount: initial_balance }
             ],
-            users: vector[user1, user2, user3, signer_addr],
+            users: vector[user1, user2, user3, user4],
         });
     }
 
-    // Checks if an address is a registered user
-    fun is_user(storage: &CoinStorage, user: address): bool {
-        let users = &storage.users;
-        let len = vector::length(users);
-        let mut i = 0;
-        
-        while (i < len) {
-            if (vector::borrow(users, i) == &user) {
-                return true;
-            }
-            i = i + 1;
-        }
-        false
-    }
-
-    // Gets the balance of a user
-    public fun get_balance(account: &signer, user: address): u64 acquires CoinStorage {
-        let storage = borrow_global<CoinStorage>(signer::address_of(account));
-        assert!(is_user(&storage, user), 0x1);
-        
-        let len = vector::length(&storage.balances);
-        let mut i = 0;
-        while (i < len) {
-            let (addr, balance) = vector::borrow(&storage.balances, i);
-            if (addr == &user) {
-                return *balance;
-            }
-            i = i + 1;
-        }
-        0
-    }
-
-    // Securely and randomly adjusts balances of all users
+    // Private entry function that handles the randomness
     #[randomness]
-    public entry fun random_adjust_balance(account: &signer) acquires CoinStorage {
+    entry fun random_adjust_balance(account: &signer) acquires CoinStorage {
         let storage = borrow_global_mut<CoinStorage>(signer::address_of(account));
         assert!(signer::address_of(account) == storage.owner, 0x1); // Only owner can trigger random adjustment
-
+        
         let len = vector::length(&storage.balances);
-        let mut i = 0;
-
+        let i = 0;
+        
         while (i < len) {
-            let (addr, balance) = vector::borrow_mut(&storage.balances, i);
+            // Get mutable reference to the balance
+            let balance = vector::borrow_mut(&mut storage.balances, i);
             
             // Secure random number in range [1, 10,000]
             let random_amount = randomness::u64_range(1, 10_000);
@@ -89,25 +62,25 @@ module GTA_Coins {
 
             if (should_increase) {
                 // Increase balance
-                *balance = *balance + random_amount;
+                balance.amount = balance.amount + random_amount;
                 storage.total_supply = storage.total_supply + random_amount;
             } else {
                 // Ensure we don't go negative
-                if (*balance >= random_amount) {
-                    *balance = *balance - random_amount;
+                if (balance.amount >= random_amount) {
+                    balance.amount = balance.amount - random_amount;
                     storage.total_supply = storage.total_supply - random_amount;
                 }
-            }
-
+            };
+            
             i = i + 1;
         }
     }
 
     // Resets the entire contract state (only owner can call)
     public entry fun reset_state(
-        account: &signer, 
-        user1: address, 
-        user2: address, 
+        account: &signer,
+        user1: address,
+        user2: address,
         user3: address
     ) acquires CoinStorage {
         let storage = borrow_global_mut<CoinStorage>(signer::address_of(account));
@@ -115,18 +88,19 @@ module GTA_Coins {
 
         let initial_balance: u64 = 100_000;
         let total_supply: u64 = 1_000_000;
-        let signer_addr = signer::address_of(account);
+
+        let user4 = signer::address_of(account); // 4th user is again the new signer
 
         // Reset balances
         storage.balances = vector[
-            (user1, initial_balance),
-            (user2, initial_balance),
-            (user3, initial_balance),
-            (signer_addr, initial_balance)
+            UserBalance { user: user1, amount: initial_balance },
+            UserBalance { user: user2, amount: initial_balance },
+            UserBalance { user: user3, amount: initial_balance },
+            UserBalance { user: user4, amount: initial_balance }
         ];
         
         // Reset users
-        storage.users = vector[user1, user2, user3, signer_addr];
+        storage.users = vector[user1, user2, user3, user4];
 
         // Reset total supply
         storage.total_supply = total_supply;
