@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { Aptos, AptosConfig, Network, Account } from "@aptos-labs/ts-sdk";
 
 // Update this to match your deployed contract address
-const MODULE_ADDRESS = "0xe59834a16ee98917c5a3896ab8b704ed3187f683b464e54c10e58b4cb653bda0";
+const MODULE_ADDRESS = "0x42cbb5d8dada99304869c2466fb0f90c40b55f323554438acd540fc397976704";
 const SPONSOR_ADDRESS = "0x7bda16775910109bd87aef69fcb4cdeb8c3defbfd51332fd025252f7b2172aa3";
 
 const aptosConfig = new AptosConfig({ network: Network.TESTNET });

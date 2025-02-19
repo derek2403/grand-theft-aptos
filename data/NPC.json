@@ -31,39 +31,6 @@
           -2.7521226414512934
         ],
         "publicKey": "0x6efb01899fcd73e335bf24178ddb82f8d400ae533f8c44790b067f0821c1d1ad",
-        "privateKey": "0xa10a8f9784a8d0100ebe6d5fe2db368ed830f58a6947fbd332491fcb0160ef18"
-      },
-      {
-        "name": "Derekkkk",
-        "occupation": "Web3 and AI Developer, Hackathon Organizer, Blockchain Educator",
-        "mbti": "ENTP",
-        "hobby": "Developing blockchain projects, attending hackathons, and engaging with the tech community",
-        "gender": "male",
-        "characteristics": [
-          "innovative",
-          "enthusiastic",
-          "collaborative",
-          "tech-savvy",
-          "community-oriented"
-        ],
-        "goals": [
-          "Build impactful Web3 applications",
-          "Educate others about blockchain",
-          "Foster a supportive tech community"
-        ],
-        "needs": {
-          "hunger": 80,
-          "energy": 80,
-          "social": 80,
-          "happiness": 80
-        },
-        "id": 1739983397710,
-        "position": [
-          -2.9770524068676485,
-          0,
-          -0.9059500219052747
-        ],
-        "publicKey": "0x89795bb5cdb7ea1a8de18eb06374344bb4dae6b6b5b35b03a0cf0c1437f27682",
         "privateKey": "0x69fbb10e7d6929900712635f712062ca8544c46fac27be238ab8f183891ba828"
       },
       {
@@ -96,8 +63,8 @@
           0,
           0.012720944189476668
         ],
-        "publicKey": "0x311505f1b6a79b709d1cf6620d736f78d57c6dc6f04e18b8e711bc706b8b1732",
-        "privateKey": "0x052781471ca4f1403c53fb903a08bc3c5b05714e5e5629005c72207d1e8c2df0"
+        "publicKey": "0xa10a8f9784a8d0100ebe6d5fe2db368ed830f58a6947fbd332491fcb0160ef18",
+        "privateKey": "0x311505f1b6a79b709d1cf6620d736f78d57c6dc6f04e18b8e711bc706b8b1732"
       }
     ]
   }

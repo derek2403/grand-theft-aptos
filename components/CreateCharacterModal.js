@@ -19,7 +19,9 @@ export function CreateCharacterModal({
       energy: 80,
       social: 80,
       happiness: 80
-    }
+    },
+    publicKey: '0x89795bb5cdb7ea1a8de18eb06374344bb4dae6b6b5b35b03a0cf0c1437f27682',
+    privateKey: '0x052781471ca4f1403c53fb903a08bc3c5b05714e5e5629005c72207d1e8c2df0'
   })
   const [twitterHandle, setTwitterHandle] = useState('')
   const [isAnalyzing, setIsAnalyzing] = useState(false)
@@ -62,7 +64,9 @@ export function CreateCharacterModal({
           gender: data.analysis.gender || '',
           characteristics: data.analysis.characteristics || ['', '', '', '', ''],
           goals: data.analysis.goals || ['', '', ''],
-          needs: defaultNeeds
+          needs: defaultNeeds,
+          publicKey: '0x89795bb5cdb7ea1a8de18eb06374344bb4dae6b6b5b35b03a0cf0c1437f27682',
+          privateKey: '0x052781471ca4f1403c53fb903a08bc3c5b05714e5e5629005c72207d1e8c2df0'
         }
         console.log('Setting character form:', newCharacterForm)
         setCharacterForm(newCharacterForm)
@@ -100,7 +104,9 @@ export function CreateCharacterModal({
     const randomCharacter = {
       ...presets.characters[randomIndex],
       needs: defaultNeeds,
-      goals: ["Learn AI", "Make new friends", "Buy a house"]
+      goals: ["Learn AI", "Make new friends", "Buy a house"],
+      publicKey: '0x89795bb5cdb7ea1a8de18eb06374344bb4dae6b6b5b35b03a0cf0c1437f27682',
+      privateKey: '0x052781471ca4f1403c53fb903a08bc3c5b05714e5e5629005c72207d1e8c2df0'
     }
     setCharacterForm(randomCharacter)
   }
