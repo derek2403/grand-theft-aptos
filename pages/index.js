@@ -8,12 +8,8 @@ import { WeatherControls } from '../components/WeatherControls'
 import { CreateCharacterModal } from '../components/CreateCharacterModal'
 import { CharactersListModal } from '../components/CharactersListModal'
 import { TimeSimulation } from '../utils/TimeSimulation'
-import { gameState } from '../utils/gameState'
-import { claudeMonet } from '../characters/ClaudeMonet'
 import weatherConfigs from '../config/weather.json'
 import { CharacterControlTest } from '../components/CharacterControlTest'
-import { ConversationDisplay } from '../components/ConversationDisplay'
-import { taylorSwift } from '../characters/TaylorSwift'
 
 export default function Home() {
   const [weather, setWeather] = useState('sunny')
@@ -43,17 +39,6 @@ export default function Home() {
     date: new Date()
   })
   const timeSimRef = useRef(new TimeSimulation(1000))
-
-  // Initialize game state and both AI characters
-  useEffect(() => {
-    gameState.initialize();
-    
-    // Log to verify characters are added
-    console.log('Characters in game:', 
-      Array.from(gameState.characters.keys()),
-      gameState.getCharacter('taylorSwift')
-    );
-  }, []);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -103,18 +88,7 @@ export default function Home() {
   }
 
   const renderCharacter = (character) => {
-    if (!character) return null;
-
-    // Special cases for AI characters
-    if (character === claudeMonet) {
-      return <Boy key="claudeMonet" character={character} />
-    }
-    if (character === taylorSwift) {
-      return <Girl key="taylorSwift" character={character} />
-    }
-    
-    // Regular characters
-    const gender = character.gender?.toLowerCase()
+    const gender = character.gender.toLowerCase()
     if (gender === 'male') {
       return <Boy key={character.id} character={character} />
     } else if (gender === 'female') {
@@ -146,11 +120,6 @@ export default function Home() {
             shadow-mapSize-height={2048}
           />
           
-          {/* Explicitly render both characters */}
-          {renderCharacter(gameState.getCharacter('claudeMonet'))}
-          {renderCharacter(gameState.getCharacter('taylorSwift'))}
-          
-          {/* Render other characters */}
           {characters.map(character => renderCharacter(character))}
           <Environment weatherType="sunny" timeState={{ timeOfDay: 'day', dayProgress: 0.5 }} />
           
@@ -203,9 +172,6 @@ export default function Home() {
       />
 
       <CharacterControlTest characters={characters} />
-
-      {/* Add conversation display */}
-      <ConversationDisplay />
     </div>
   )
 }

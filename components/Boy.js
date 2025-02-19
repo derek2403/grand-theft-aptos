@@ -4,8 +4,6 @@ import { useFrame, useThree } from '@react-three/fiber'
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader'
 import * as THREE from 'three'
 import { useCharacterController } from '../utils/CharacterController'
-import { claudeMonet } from '../characters/ClaudeMonet'
-import { gameState } from '../utils/gameState'
 
 export function Boy({ character }) {
   const [model, setModel] = useState(null)
@@ -127,12 +125,6 @@ export function Boy({ character }) {
         nameTagRef.current.rotation.y = angleToCamera
       }
     }
-
-    // Update Claude Monet
-    claudeMonet.update(delta)
-
-    // Update game state
-    gameState.update(delta)
   })
 
   useEffect(() => {

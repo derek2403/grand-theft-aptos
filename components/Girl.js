@@ -1,10 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTexture, useAnimations, Text } from '@react-three/drei'
-import { useFrame, useThree } from '@react-three/fiber'
+import { useFrame } from '@react-three/fiber'
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader'
 import * as THREE from 'three'
 import { useCharacterController } from '../utils/CharacterController'
-import { gameState } from '../utils/gameState'
 
 export function Girl({ character }) {
   const [model, setModel] = useState(null)
@@ -14,8 +13,6 @@ export function Girl({ character }) {
   const mixerRef = useRef()
   const spotlightRef = useRef()
   const nameTagRef = useRef()
-  const { camera } = useThree()
-  const activeGotoRef = useRef(null)
 
   useEffect(() => {
     const loader = new FBXLoader()
@@ -91,52 +88,19 @@ export function Girl({ character }) {
       mixerRef.current.update(delta)
     }
 
-    // Update position in game state
-    if (modelRef.current) {
-      gameState.updateCharacterPosition(character.name, {
-        x: modelRef.current.position.x,
-        z: modelRef.current.position.z
-      });
-    }
-
-    // Update goto movement if active
-    if (modelRef.current?.activeGoto) {
-      const finished = modelRef.current.activeGoto.update(modelRef.current, delta)
-      if (finished) {
-        // Clear the goto reference and ensure standing animation
-        modelRef.current.activeGoto = null
-        if (animationsLoaded.Run) {
-          animationsLoaded.Run.fadeOut(0.2) // Fade out running animation
-        }
-        if (animationsLoaded.Stand) {
-          animationsLoaded.Stand.reset().fadeIn(0.2).play()
-        }
-      }
-    }
-
     if (modelRef.current && spotlightRef.current) {
       const position = modelRef.current.position
       // Position the light directly above the character
       spotlightRef.current.position.set(position.x, position.y + 5, position.z)
+      // Target directly below the light (at character position)
       spotlightRef.current.target.position.set(position.x, position.y, position.z)
       spotlightRef.current.target.updateMatrixWorld()
 
-      // Update name tag position and rotation to face camera
+      // Update name tag position to follow character - increased height to 5 units
       if (nameTagRef.current) {
         nameTagRef.current.position.set(position.x, position.y + 3.5, position.z)
-        
-        // Calculate direction to camera
-        const directionToCamera = new THREE.Vector3()
-        directionToCamera.subVectors(camera.position, nameTagRef.current.position)
-        
-        // Calculate rotation to face camera
-        const angleToCamera = Math.atan2(directionToCamera.x, directionToCamera.z)
-        nameTagRef.current.rotation.y = angleToCamera
       }
     }
-
-    // Update game state
-    gameState.update(delta)
   })
 
   useEffect(() => {
@@ -151,13 +115,6 @@ export function Girl({ character }) {
     console.log(`Character is at: ${position.x}, ${position.z}`)
   }, [position])
 
-  useEffect(() => {
-    if (character && modelRef.current) {
-      character.ref = modelRef
-      character.animations = animationsLoaded
-    }
-  }, [character, modelRef.current, animationsLoaded])
-
   if (!model) return null
 
   return (
@@ -168,24 +125,21 @@ export function Girl({ character }) {
         position={character.position}
         rotation={[0, Math.PI, 0]}
       />
-      {/* Billboard name tag that always faces camera */}
-      <group
+      {/* Floating name tag with increased height */}
+      <Text
         ref={nameTagRef}
-        position={[character.position[0], character.position[1] + 3.5, character.position[2]]}
+        position={[character.position[0], character.position[1] + 5, character.position[2]]}
+        fontSize={0.5}
+        color="white"
+        anchorX="center"
+        anchorY="middle"
+        outlineWidth={0.1}
+        outlineColor="black"
+        renderOrder={1}
+        depthOffset={-1}
       >
-        <Text
-          fontSize={0.5}
-          color="white"
-          anchorX="center"
-          anchorY="middle"
-          outlineWidth={0.1}
-          outlineColor="black"
-          renderOrder={1}
-          depthOffset={-1}
-        >
-          {character.name}
-        </Text>
-      </group>
+        {character.name}
+      </Text>
       <group>
         <spotLight
           ref={spotlightRef}
