@@ -164,7 +164,7 @@ export const User = forwardRef(({ character }, ref) => {
   const [showRadialMenu, setShowRadialMenu] = useState(false)
   const [radialMenuPosition, setRadialMenuPosition] = useState({ x: 0, y: 0 })
   const [currentAnimation, setCurrentAnimation] = useState(null)
-  const [npcs] = useState(NPCData.characters)
+  const [npcs, setNpcs] = useState(NPCData.characters)
 
   useEffect(() => {
     const loader = new FBXLoader()
@@ -327,6 +327,14 @@ export const User = forwardRef(({ character }, ref) => {
         nameTagRef.current.rotation.y = angleToCamera
       }
     }
+
+    // Handle active movement
+    if (activeMovement && modelRef.current) {
+      const done = activeMovement.update(modelRef.current, delta)
+      if (done) {
+        setActiveMovement(null)
+      }
+    }
   })
 
   // Handle spacebar for radial menu
@@ -350,18 +358,20 @@ export const User = forwardRef(({ character }, ref) => {
   const handleRadialSelect = (action) => {
     setShowRadialMenu(false)
 
-    if (action.type === 'animation') {
-      if (animationsLoaded[action.name]) {
-        Object.values(animationsLoaded).forEach(anim => anim.stop())
-        animationsLoaded[action.name].reset().fadeIn(0.5).play()
-        setCurrentAnimation(action.name)
-      }
-    } else if (action.type === 'talk') {
-      const npcRef = { current: null }
-      const talkInteraction = talkTo(
+    if (action.type === 'talk') {
+      const targetNPC = action.target
+      const targetPosition = new THREE.Vector3(
+        targetNPC.position[0],
+        targetNPC.position[1],
+        targetNPC.position[2]
+      )
+
+      // Create interaction using talkTo from character.js
+      const interaction = talkTo(
         character.name,
-        action.target.name,
+        targetNPC.name,
         {
+          ref: modelRef.current,
           playAnimation: (name) => {
             if (animationsLoaded[name]) {
               Object.values(animationsLoaded).forEach(anim => anim.stop())
@@ -370,9 +380,57 @@ export const User = forwardRef(({ character }, ref) => {
             }
           }
         },
-        npcRef
+        {
+          ref: targetNPC.ref?.current,
+          playAnimation: (name) => {
+            if (targetNPC.animations?.[name]) {
+              Object.values(targetNPC.animations).forEach(anim => anim.stop())
+              targetNPC.animations[name].reset().fadeIn(0.5).play()
+            }
+          }
+        }
       )
-      setActiveMovement(talkInteraction)
+
+      // Store the interaction
+      setActiveMovement({
+        update: (model, delta) => {
+          if (!model || !targetNPC.ref?.current) return false
+          const done = interaction.update(model, targetNPC.ref.current, delta)
+          
+          if (done) {
+            // Reset both characters to idle state
+            if (animationsLoaded.Stand) {
+              Object.values(animationsLoaded).forEach(anim => anim.stop())
+              animationsLoaded.Stand.reset().fadeIn(0.5).play()
+              setCurrentAnimation('Stand')
+            }
+            if (targetNPC.animations?.Stand) {
+              Object.values(targetNPC.animations).forEach(anim => anim.stop())
+              targetNPC.animations.Stand.reset().fadeIn(0.5).play()
+            }
+          }
+          
+          return done
+        }
+      })
+
+      // Signal NPC controller to handle NPC's side of interaction
+      if (window.npcController) {
+        window.npcController.handleTalkInteraction(targetNPC.id, {
+          type: 'talk',
+          partner: {
+            name: character.name,
+            ref: modelRef,
+            position: modelRef.current.position
+          }
+        })
+      }
+    } else if (action.type === 'animation') {
+      if (animationsLoaded[action.name]) {
+        Object.values(animationsLoaded).forEach(anim => anim.stop())
+        animationsLoaded[action.name].reset().fadeIn(0.5).play()
+        setCurrentAnimation(action.name)
+      }
     }
   }
 

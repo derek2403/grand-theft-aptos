@@ -6,6 +6,7 @@ import { Girl } from '../components/Girl'
 import { Environment } from '../components/Environment'
 import { CreateCharacterModal } from '../components/CreateCharacterModal'
 import { TimeSimulation } from '../utils/TimeSimulation'
+import { User } from '../components/User'
 import weatherConfigs from '../config/weather.json'
 import npcData from '../data/NPC.json'
 import { NPCController } from '../components/NPC'
@@ -23,6 +24,9 @@ export default function Home() {
     date: new Date()
   })
   const timeSimRef = useRef(new TimeSimulation(1000))
+  const [showJoinModal, setShowJoinModal] = useState(false)
+  const [playerCharacter, setPlayerCharacter] = useState(null)
+  const userRef = useRef()
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -91,6 +95,16 @@ export default function Home() {
     return null
   }
 
+  const handleJoinGame = (formData) => {
+    setPlayerCharacter({
+      name: formData.username,
+      gender: formData.gender,
+      id: 'player',
+      position: [0, 0, 0]
+    })
+    setShowJoinModal(false)
+  }
+
   return (
     <div className="w-full h-screen relative">
       <Canvas
@@ -115,6 +129,14 @@ export default function Home() {
           />
           
           {characters.map(character => renderCharacter(character))}
+
+          {playerCharacter && (
+            <User 
+              ref={userRef}
+              character={playerCharacter}
+            />
+          )}
+
           <Environment weatherType="sunny" timeState={{ timeOfDay: 'day', dayProgress: 0.5 }} />
           
           <OrbitControls
@@ -138,15 +160,69 @@ export default function Home() {
 
       {/* Top Bar Controls */}
       <div className="absolute top-4 left-4 flex gap-4">
+        {!playerCharacter && (
+          <button
+            onClick={() => setShowJoinModal(true)}
+            className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
+          >
+            Join Game
+          </button>
+        )}
         <button
           onClick={() => setShowCreateModal(true)}
           className="bg-green-500 text-white p-2 rounded hover:bg-green-600"
         >
-          Create Character
+          Create NPC
         </button>
       </div>
 
       {/* Modals */}
+      {showJoinModal && (
+        <div className="fixed inset-0 flex items-center justify-center z-50">
+          <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setShowJoinModal(false)} />
+          <div className="bg-white p-6 rounded-lg shadow-xl relative z-10">
+            <h2 className="text-2xl mb-4">Join Game</h2>
+            <form onSubmit={(e) => {
+              e.preventDefault()
+              handleJoinGame({
+                username: e.target.username.value,
+                gender: e.target.gender.value
+              })
+            }}>
+              <input
+                name="username"
+                placeholder="Enter username"
+                className="block w-full mb-4 p-2 border rounded"
+                required
+              />
+              <select
+                name="gender"
+                className="block w-full mb-4 p-2 border rounded"
+                required
+              >
+                <option value="men">Male</option>
+                <option value="women">Female</option>
+              </select>
+              <div className="flex gap-2">
+                <button
+                  type="submit"
+                  className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                >
+                  Join
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowJoinModal(false)}
+                  className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       <CreateCharacterModal
         showModal={showCreateModal}
         onClose={() => setShowCreateModal(false)}

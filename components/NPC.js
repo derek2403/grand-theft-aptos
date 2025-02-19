@@ -3,6 +3,7 @@ import { checkPosition, getCheckpoints, goto, playAnimation, wanderAround, talkT
 import NPCData from '../data/NPC.json'
 import { ChatLog } from './ChatLog'
 import { generateCharacterActions } from '../services/openai'
+import * as THREE from 'three'
 
 export function NPCController() {
   const [characters, setCharacters] = useState(NPCData.characters)
@@ -432,6 +433,38 @@ export function NPCController() {
       setIsExecuting(false)
     }
   }
+
+  const handleTalkInteraction = (npcId, interaction) => {
+    const npc = characters.find(c => c.id === npcId)
+    if (!npc || !npc.ref?.current) return
+
+    // Clear current queue for this NPC
+    clearQueue(npcId)
+
+    // Set NPC to talking state
+    if (npc.animations?.Talking) {
+      Object.values(npc.animations).forEach(anim => anim.stop())
+      npc.animations.Talking.reset().fadeIn(0.5).play()
+    }
+
+    // Face the player
+    const direction = new THREE.Vector3()
+    direction.subVectors(interaction.partner.position, npc.ref.current.position)
+    npc.ref.current.rotation.y = Math.atan2(direction.x, direction.z)
+  }
+
+  // Expose the controller methods
+  useEffect(() => {
+    window.npcController = {
+      handleTalkInteraction,
+      clearQueue,
+      clearAllQueues,
+      generateAllActions
+    }
+    return () => {
+      delete window.npcController
+    }
+  }, [characters])
 
   return chatLog.component
 } 
