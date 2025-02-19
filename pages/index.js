@@ -7,8 +7,8 @@ import { Environment } from '../components/Environment'
 import { CreateCharacterModal } from '../components/CreateCharacterModal'
 import { TimeSimulation } from '../utils/TimeSimulation'
 import weatherConfigs from '../config/weather.json'
-import { CharacterControlTest } from '../components/CharacterControlTest'
 import npcData from '../data/NPC.json'
+import { NPCController } from '../components/NPC'
 
 
 export default function Home() {
@@ -166,6 +166,8 @@ export default function Home() {
         </Suspense>
       </Canvas>
 
+      <NPCController />
+
       {/* Top Bar Controls */}
       <div className="absolute top-4 left-4 flex gap-4">
         <button
@@ -182,7 +184,6 @@ export default function Home() {
         onClose={() => setShowCreateModal(false)}
       />
 
-      <CharacterControlTest characters={characters} />
     </div>
   )
 }
