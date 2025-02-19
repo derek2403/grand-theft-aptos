@@ -1,0 +1,68 @@
+{
+  "characters": [
+    {
+      "name": "David Kim",
+      "occupation": "Musician",
+      "mbti": "INFP",
+      "age": 27,
+      "hobby": "Writing",
+      "gender": "male",
+      "characteristics": [
+        "Idealistic",
+        "Creative",
+        "Sensitive",
+        "Introspective",
+        "Passionate"
+      ],
+      "needs": {
+        "hunger": 80,
+        "energy": 80,
+        "social": 80,
+        "happiness": 80
+      },
+      "goals": [
+        "Learn AI",
+        "Make new friends",
+        "Buy a house"
+      ],
+      "id": 1739946942405,
+      "position": [
+        -2.480044033121702,
+        0,
+        -4.53838719456291
+      ]
+    },
+    {
+      "name": "Sarah Mitchell",
+      "occupation": "Teacher",
+      "mbti": "ENFJ",
+      "age": 29,
+      "hobby": "Reading",
+      "gender": "female",
+      "characteristics": [
+        "Charismatic",
+        "Supportive",
+        "Organized",
+        "Inspiring",
+        "Patient"
+      ],
+      "needs": {
+        "hunger": 50,
+        "energy": 70,
+        "social": 30,
+        "happiness": 80
+      },
+      "goals": [
+        "Learn AI",
+        "Make new friends",
+        "Buy a house"
+      ],
+      "id": 1739947215383,
+      "position": [
+        2.8375400184782507,
+        0,
+        -1.712674055564487
+      ]
+    }
+  ]
+}

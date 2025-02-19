@@ -4,12 +4,12 @@ import { Suspense, useState, useRef, useEffect } from 'react'
 import { Boy } from '../components/Boy'
 import { Girl } from '../components/Girl'
 import { Environment } from '../components/Environment'
-import { WeatherControls } from '../components/WeatherControls'
 import { CreateCharacterModal } from '../components/CreateCharacterModal'
-import { CharactersListModal } from '../components/CharactersListModal'
 import { TimeSimulation } from '../utils/TimeSimulation'
 import weatherConfigs from '../config/weather.json'
 import { CharacterControlTest } from '../components/CharacterControlTest'
+import npcData from '../data/NPC.json'
+
 
 export default function Home() {
   const [weather, setWeather] = useState('sunny')
@@ -49,6 +49,11 @@ export default function Home() {
     return () => clearInterval(interval)
   }, [])
 
+  // Load characters from NPC.json on initial render
+  useEffect(() => {
+    setCharacters(npcData.characters)
+  }, [])
+
   // Get current config with fallback to day/night if specific time not found
   const getCurrentConfig = () => {
     const timeOfDay = timeState.timeOfDay
@@ -61,13 +66,34 @@ export default function Home() {
 
   const currentConfig = getCurrentConfig()
 
-  const handleCreateCharacter = (formData) => {
+  const handleCreateCharacter = async (formData) => {
     const newCharacter = {
       ...formData,
       id: Date.now(),
       position: [Math.random() * 10 - 5, 0, Math.random() * 10 - 5]
     }
+
+    // Update state
     setCharacters(prev => [...prev, newCharacter])
+
+    // Save to NPC.json
+    try {
+      const response = await fetch('/api/saveCharacter', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newCharacter),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to save character')
+      }
+    } catch (error) {
+      console.error('Error saving character:', error)
+      // Optionally handle the error in the UI
+    }
+
     setShowCreateModal(false)
     setCharacterForm({
       name: '',
@@ -148,27 +174,12 @@ export default function Home() {
         >
           Create Character
         </button>
-        <button
-          onClick={() => setShowCharactersList(true)}
-          className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
-        >
-          Show Characters
-        </button>
       </div>
 
       {/* Modals */}
       <CreateCharacterModal
         showModal={showCreateModal}
         onClose={() => setShowCreateModal(false)}
-        onSubmit={handleCreateCharacter}
-        characterForm={characterForm}
-        setCharacterForm={setCharacterForm}
-      />
-
-      <CharactersListModal
-        showModal={showCharactersList}
-        onClose={() => setShowCharactersList(false)}
-        characters={characters}
       />
 
       <CharacterControlTest characters={characters} />

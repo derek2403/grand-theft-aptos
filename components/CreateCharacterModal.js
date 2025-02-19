@@ -1,21 +1,29 @@
-import React from 'react'
+import React, { Suspense, useState } from 'react'
 import presets from '../data/presets.json'
+import { Canvas } from '@react-three/fiber'
+import { OrbitControls } from '@react-three/drei'
+import { Boy } from './Boy'
+import { Girl } from './Girl'
 
-export function CreateCharacterModal({ 
-  showModal, 
-  onClose, 
-  onSubmit, 
-  characterForm, 
-  setCharacterForm 
-}) {
-  const defaultNeeds = {
-    hunger: 80,
-    energy: 80,
-    social: 80,
-    happiness: 80
-  }
+export function CreateCharacterModal({ showModal, onClose }) {
+  const [characterForm, setCharacterForm] = useState({
+    name: '',
+    occupation: '',
+    mbti: '',
+    age: '',
+    hobby: '',
+    gender: '',
+    characteristics: ['', '', '', '', ''],
+    goals: ['', '', ''],
+    needs: {
+      hunger: 50,
+      energy: 70,
+      social: 30,
+      happiness: 80
+    }
+  })
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     if (!characterForm.name || !characterForm.occupation || 
         !characterForm.mbti || !characterForm.age || 
@@ -25,20 +33,105 @@ export function CreateCharacterModal({
       alert("Please fill in all fields")
       return
     }
-    onSubmit({
+
+    const newCharacter = {
       ...characterForm,
-      needs: defaultNeeds
-    })
+      id: Date.now(),
+      position: [Math.random() * 10 - 5, 0, Math.random() * 10 - 5]
+    }
+
+    // Save to NPC.json
+    try {
+      const response = await fetch('/api/saveCharacter', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newCharacter),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to save character')
+      }
+
+      // Reset form
+      setCharacterForm({
+        name: '',
+        occupation: '',
+        mbti: '',
+        age: '',
+        hobby: '',
+        gender: '',
+        characteristics: ['', '', '', '', ''],
+        goals: ['', '', ''],
+        needs: {
+          hunger: 50,
+          energy: 70,
+          social: 30,
+          happiness: 80
+        }
+      })
+
+      // Close modal and refresh page to load new character
+      onClose()
+      window.location.reload()
+
+    } catch (error) {
+      console.error('Error saving character:', error)
+      alert('Failed to save character. Please try again.')
+    }
   }
 
   const handleRandomize = () => {
     const randomIndex = Math.floor(Math.random() * presets.characters.length)
     const randomCharacter = {
       ...presets.characters[randomIndex],
-      needs: defaultNeeds,
+      needs: {
+        hunger: 50,
+        energy: 70,
+        social: 30,
+        happiness: 80
+      },
       goals: ["Learn AI", "Make new friends", "Buy a house"]
     }
     setCharacterForm(randomCharacter)
+  }
+
+  // Preview character component based on selected gender
+  const CharacterPreview = () => {
+    const previewCharacter = {
+      ...characterForm,
+      id: 'preview',
+      position: [0, 0, 0],
+      name: characterForm.name || 'Preview'
+    }
+
+    return (
+      <div className="w-full h-48 mb-4 bg-gray-100 rounded">
+        <Canvas
+          camera={{
+            position: [0, 2, 5],
+            fov: 50
+          }}
+        >
+          <ambientLight intensity={1} />
+          <directionalLight position={[10, 10, 5]} intensity={1.5} />
+          <Suspense fallback={null}>
+            {characterForm.gender.toLowerCase() === 'male' ? (
+              <Boy character={previewCharacter} />
+            ) : characterForm.gender.toLowerCase() === 'female' ? (
+              <Girl character={previewCharacter} />
+            ) : null}
+            <OrbitControls
+              enableZoom={false}
+              enablePan={false}
+              autoRotate
+              autoRotateSpeed={2}
+            />
+          </Suspense>
+        </Canvas>
+      </div>
+    )
   }
 
   if (!showModal) return null
@@ -55,6 +148,10 @@ export function CreateCharacterModal({
           <span>🎲</span> Random
         </button>
       </div>
+
+      {/* Show character preview if gender is selected */}
+      {characterForm.gender && <CharacterPreview />}
+
       <form onSubmit={handleSubmit}>
         <input
           required
@@ -135,35 +232,6 @@ export function CreateCharacterModal({
               }}
             />
           ))}
-        </div>
-        <div className="mb-2">
-          <p className="mb-1">Initial Needs:</p>
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="text-sm">Hunger: 80</label>
-              <div className="w-full bg-gray-200 rounded h-2">
-                <div className="bg-blue-500 h-2 rounded" style={{width: '80%'}}></div>
-              </div>
-            </div>
-            <div>
-              <label className="text-sm">Energy: 80</label>
-              <div className="w-full bg-gray-200 rounded h-2">
-                <div className="bg-green-500 h-2 rounded" style={{width: '80%'}}></div>
-              </div>
-            </div>
-            <div>
-              <label className="text-sm">Social: 80</label>
-              <div className="w-full bg-gray-200 rounded h-2">
-                <div className="bg-yellow-500 h-2 rounded" style={{width: '80%'}}></div>
-              </div>
-            </div>
-            <div>
-              <label className="text-sm">Happiness: 80</label>
-              <div className="w-full bg-gray-200 rounded h-2">
-                <div className="bg-pink-500 h-2 rounded" style={{width: '80%'}}></div>
-              </div>
-            </div>
-          </div>
         </div>
         <div className="flex gap-2">
           <button
