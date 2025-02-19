@@ -12,12 +12,10 @@ function MyApp({ Component, pageProps }) {
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <AutoConnectProvider>
         <WalletProvider>
-          <div className="min-h-screen">
-            <div className="container mx-auto px-4 py-2">
-              <WalletSelector />
-              <Component {...pageProps} />
-            </div>
+          <div className="fixed top-4 right-4 z-50">
+            <WalletSelector />
           </div>
+          <Component {...pageProps} />
         </WalletProvider>
       </AutoConnectProvider>
     </ThemeProvider>
