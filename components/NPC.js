@@ -222,14 +222,21 @@ export function NPCController() {
           messageData.text = `is ${action.animation.toLowerCase()}`
           chatLog.addMessage(messageData)
 
-          if (character.animations?.[action.animation]) {
-            // Use longer fade duration for animations
-            character.animations[action.animation].reset().fadeIn(0.5).play()
+          if (character.ref?.current && character.animations?.[action.animation]) {
+            // Stop any current animation
+            Object.values(character.animations).forEach(anim => anim.stop())
+            
+            // Play the new animation
+            character.animations[action.animation].reset()
+            character.animations[action.animation].play()
             
             await new Promise(r => setTimeout(r, 3000))
             
+            // Return to standing animation
+            Object.values(character.animations).forEach(anim => anim.stop())
             if (character.animations?.Stand) {
-              character.animations.Stand.reset().fadeIn(0.5).play()
+              character.animations.Stand.reset()
+              character.animations.Stand.play()
             }
           }
           resolve()
