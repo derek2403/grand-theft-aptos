@@ -166,10 +166,10 @@ export function NPCController() {
       const messageData = {
         id: Date.now(),
         timestamp: new Date().toLocaleTimeString(),
-        displayName: character.name, // Add displayName for rendering
+        displayName: character.name,
         text: '',
         action: action,
-        characterData: {  // Move full character data to separate field
+        characterData: {
           name: character.name,
           occupation: character.occupation,
           mbti: character.mbti,
@@ -185,6 +185,7 @@ export function NPCController() {
           chatLog.addMessage(messageData)
           
           if (character.ref?.current) {
+            // Use the goto utility function
             character.ref.current.activeGoto = goto(
               character.name,
               action.checkpoint,
@@ -211,12 +212,17 @@ export function NPCController() {
           messageData.text = `is ${action.animation.toLowerCase()}`
           chatLog.addMessage(messageData)
 
-          if (character.animations?.[action.animation]) {
-            Object.values(character.animations).forEach(anim => {
-              anim.fadeOut(0.2)
-            })
-            character.animations[action.animation].reset().fadeIn(0.2).play()
-          }
+          // Use the playAnimation utility function
+          playAnimation(character.name, action.animation, {
+            playAnimation: (name) => {
+              if (character.animations?.[name]) {
+                Object.values(character.animations).forEach(anim => {
+                  anim.fadeOut(0.2)
+                })
+                character.animations[name].reset().fadeIn(0.2).play()
+              }
+            }
+          })
 
           setTimeout(() => {
             resolve()
@@ -231,18 +237,8 @@ export function NPCController() {
             return
           }
 
-          // Force stop target character's current action
-          if (targetChar.ref?.current) {
-            targetChar.ref.current.activeGoto = null
-          }
-          if (targetChar.animations) {
-            Object.values(targetChar.animations).forEach(anim => {
-              anim.fadeOut(0.2)
-            })
-          }
-
           messageData.text = `approaches ${targetChar.name} for a conversation`
-          messageData.targetCharacterData = {  // Add target character data
+          messageData.targetCharacterData = {
             name: targetChar.name,
             occupation: targetChar.occupation,
             mbti: targetChar.mbti,
@@ -252,17 +248,27 @@ export function NPCController() {
           }
           chatLog.addMessage(messageData)
 
+          // Use the talkTo utility function
           const interaction = talkTo(
             character.name,
             targetChar.name,
             {
-              playAnimation: (name, charName) => {
-                const char = charName === character.name ? character : targetChar
-                if (char.animations?.[name]) {
-                  Object.values(char.animations).forEach(anim => {
+              playAnimation: (name) => {
+                if (character.animations?.[name]) {
+                  Object.values(character.animations).forEach(anim => {
                     anim.fadeOut(0.2)
                   })
-                  char.animations[name].reset().fadeIn(0.2).play()
+                  character.animations[name].reset().fadeIn(0.2).play()
+                }
+              }
+            },
+            {
+              playAnimation: (name) => {
+                if (targetChar.animations?.[name]) {
+                  Object.values(targetChar.animations).forEach(anim => {
+                    anim.fadeOut(0.2)
+                  })
+                  targetChar.animations[name].reset().fadeIn(0.2).play()
                 }
               }
             }
@@ -292,6 +298,7 @@ export function NPCController() {
           messageData.text = 'is wandering around'
           chatLog.addMessage(messageData)
 
+          // Use the wanderAround utility function
           const wanderMovement = wanderAround(
             character.name,
             {
@@ -315,7 +322,7 @@ export function NPCController() {
               character.ref.current.activeGoto = null
             }
             resolve()
-          }, 10000) // Wander for 10 seconds
+          }, 10000)
           break
 
         default:

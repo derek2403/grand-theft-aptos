@@ -6,15 +6,63 @@ const openai = new OpenAI({
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ message: 'Method not allowed' })
+    return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  const { action, character, targetCharacter = null } = req.body
-
   try {
-    // Validate required character data
-    if (!character?.name) {
-      throw new Error('Invalid character data')
+    const { action, character, targetCharacter } = req.body
+
+    // Different prompts based on action type
+    let systemPrompt = ''
+    let userPrompt = ''
+
+    switch (action.type) {
+      case 'goto':
+        systemPrompt = `Generate a natural thought or comment from a character going to a location.
+          Return a JSON object with "speaker" and "text" fields.
+          Make it reflect their personality and interests.
+          Example: { "speaker": "Alice", "text": "I could really use some coffee from the kitchen right now!" }`
+
+        userPrompt = `Character ${character.name} (${character.mbti}) who likes ${character.hobby} 
+          is going to ${action.checkpoint}.
+          Generate a natural thought or comment about why they're going there.`
+        break
+
+      case 'animation':
+        systemPrompt = `Generate a natural comment from a character expressing their current emotion/action.
+          Return a JSON object with "speaker" and "text" fields.
+          Make it reflect their personality and current state.
+          Example: { "speaker": "Bob", "text": "I just can't help dancing when I'm in a good mood!" }`
+
+        userPrompt = `Character ${character.name} (${character.mbti}) is ${action.animation.toLowerCase()}.
+          Generate a natural comment expressing why they feel this way.`
+        break
+
+      case 'talkTo':
+        systemPrompt = `Generate dialogue between two characters meeting for a conversation.
+          Return a JSON object with "speaker" and "text" fields.
+          Make it reflect their personalities and relationship.
+          Example: { "speaker": "Charlie", "text": "Hey Alice, I was just thinking about that project we discussed!" }`
+
+        userPrompt = `${character.name} (${character.mbti}, ${character.occupation}) 
+          is starting a conversation with 
+          ${targetCharacter.name} (${targetCharacter.mbti}, ${targetCharacter.occupation}).
+          Generate an opening line that reflects their personalities and possible shared interests. The opening line should be fun and funny, dont use boring ones`
+        break
+
+      case 'wander':
+        systemPrompt = `Generate a natural thought from a character who is wandering around.
+          Return a JSON object with "speaker" and "text" fields.
+          Make it reflect their personality and current mindset.
+          Example: { "speaker": "David", "text": "Sometimes I just need to walk around and clear my head." }`
+
+        userPrompt = `Character ${character.name} (${character.mbti}) who works as ${character.occupation} 
+          is wandering around.
+          Generate a natural thought about why they're wandering or what they're thinking about.`
+        break
+
+      default:
+        throw new Error('Invalid action type')
     }
 
     const completion = await openai.chat.completions.create({
@@ -22,66 +70,33 @@ export default async function handler(req, res) {
       messages: [
         {
           role: "system",
-          content: `You are generating contextual dialogue for characters in a simulation.
-          Return ONLY a JSON array without any markdown formatting or code blocks.
-          Make the conversations natural and reflect their personalities (MBTI).
-          For talk interactions:
-          - Include discussion of their hobbies and occupations
-          - Show their personality traits
-          - Keep responses concise (1-2 sentences)
-          - Make the conversation flow naturally
-          For solo actions:
-          - Generate thoughts or reactions that match their personality
-          - Reference their needs or goals when relevant
-          Each dialogue line MUST have "speaker" and "text" fields.
-          Make the conversations natural and reflect their personalities (MBTI).`
+          content: systemPrompt
         },
         {
           role: "user",
-          content: `Generate dialogue for this interaction:
-          
-          Character: ${character.name} (${character.mbti || 'Unknown'})
-          Occupation: ${character.occupation || 'Unknown'}
-          Hobby: ${character.hobby || 'Unknown'}
-          Traits: ${(character.characteristics || []).join(', ')}
-          
-          ${targetCharacter ? `
-          Talking to: ${targetCharacter.name} (${targetCharacter.mbti || 'Unknown'})
-          Their occupation: ${targetCharacter.occupation || 'Unknown'}
-          Their hobby: ${targetCharacter.hobby || 'Unknown'}
-          Their traits: ${(targetCharacter.characteristics || []).join(', ')}
-          ` : ''}
-          
-          Action: ${action.type} ${action.animation || action.checkpoint || ''}
-          
-          Return array of dialogue lines with "speaker" and "text" fields like:
-          [{"speaker": "Name", "text": "What they say"}]`
+          content: userPrompt
         }
       ],
-      temperature: 0.8,
-      max_tokens: 250
+      max_tokens: 150,
+      temperature: 0.7
     })
 
-    let dialogue
     try {
       const content = completion.choices[0].message.content
       // Remove any markdown code block formatting
       const jsonStr = content.replace(/```json\n|\n```|```/g, '').trim()
-      const rawDialogue = JSON.parse(jsonStr)
-      
-      // Transform the dialogue format if needed
-      dialogue = rawDialogue.map(line => ({
-        speaker: line.speaker || line.character || character.name,
-        text: line.text || line.dialogue || ''
-      }))
+      const dialogue = JSON.parse(jsonStr)
 
       // Validate dialogue format
-      if (!Array.isArray(dialogue) || !dialogue.every(line => 
-        typeof line.speaker === 'string' && 
-        typeof line.text === 'string'
-      )) {
+      if (!dialogue.speaker || !dialogue.text) {
         throw new Error('Invalid dialogue format')
       }
+
+      // Return array with single dialogue
+      return res.status(200).json({ 
+        dialogue: [dialogue]
+      })
+
     } catch (error) {
       console.error('Error parsing dialogue:', error)
       console.error('Raw content:', completion.choices[0].message.content)
@@ -91,7 +106,6 @@ export default async function handler(req, res) {
       })
     }
 
-    return res.status(200).json({ dialogue })
   } catch (error) {
     console.error('Error:', error)
     return res.status(500).json({ error: error.message })
