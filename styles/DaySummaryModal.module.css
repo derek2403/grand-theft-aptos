@@ -1,17 +1,20 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
 .modalOverlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0.85);
   display: flex;
   justify-content: center;
   align-items: center;
   opacity: 0;
-  transition: opacity 0.2s ease-in-out;
+  transition: all 0.3s ease-in-out;
   pointer-events: none;
   z-index: 1000;
+  backdrop-filter: blur(8px);
 }
 
 .visible {
@@ -20,94 +23,259 @@
 }
 
 .modalContainer {
-  background: white;
-  padding: 2rem;
-  border-radius: 0.5rem;
-  width: 90%;
-  max-width: 600px;
-  max-height: 80vh;
+  background: #1a1a1a;
+  padding: 1.5rem 2rem;
+  border-radius: 1rem;
+  width: 95%;
+  height: 90vh;
+  max-height: 800px;
   overflow-y: auto;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  font-family: 'Inter', sans-serif;
+  transform: scale(0.95);
+  transition: transform 0.3s ease-in-out;
+  color: #fff;
+}
+
+.visible .modalContainer {
+  transform: scale(1);
 }
 
 .title {
-  font-size: 1.5rem;
-  font-weight: bold;
-  margin-bottom: 0.5rem;
-  color: #333;
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+  color: #fff;
+  letter-spacing: -0.025em;
 }
 
 .subtitle {
   font-size: 1rem;
-  color: #666;
-  margin-bottom: 1.5rem;
+  color: #9ca3af;
+  margin-bottom: 1rem;
+  font-weight: 500;
 }
 
 .weatherInfo {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 1.5rem;
-  padding: 0.5rem;
-  background: #f5f5f5;
-  border-radius: 0.25rem;
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  background: linear-gradient(to right, #2d2d2d, #333333);
+  border-radius: 0.75rem;
+  font-weight: 500;
+  color: #e5e7eb;
 }
 
 .content {
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
 }
 
 .summaryGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: 1rem;
+  margin-bottom: 1rem;
 }
 
 .summaryItem {
-  background: #f8f9fa;
+  background: #2d2d2d;
   padding: 1rem;
-  border-radius: 0.5rem;
-  border: 1px solid #e9ecef;
+  border-radius: 0.75rem;
+  border: 1px solid #404040;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  height: 100%;
+}
+
+.summaryItem:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+  background: #333333;
 }
 
 .summaryItem h3 {
-  font-size: 1.2rem;
-  font-weight: bold;
+  font-size: 1.1rem;
+  font-weight: 600;
   margin-bottom: 0.5rem;
-  color: #333;
+  color: #fff;
+}
+
+.agentSpecialty {
+  color: #9ca3af;
+  font-size: 0.85rem;
+  font-weight: 500;
 }
 
 .metrics {
-  margin-top: 1rem;
-}
-
-.metrics h4 {
-  font-size: 1rem;
-  font-weight: bold;
-  margin-bottom: 0.5rem;
-  color: #555;
+  margin-top: 0.75rem;
 }
 
 .metrics p {
   margin: 0.25rem 0;
-  color: #666;
+  color: #d1d5db;
+  font-size: 0.85rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.positive {
+  color: #34d399;
+  font-weight: 600;
+}
+
+.negative {
+  color: #f87171;
+  font-weight: 600;
+}
+
+.sparkline {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #404040;
+}
+
+.sparklineLabel {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  margin-bottom: 0.25rem;
+}
+
+.additionalInfo {
+  background: #2d2d2d;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  margin-top: 1rem;
+}
+
+.additionalInfo h3 {
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.insights p {
+  color: #d1d5db;
+  margin: 0.25rem 0;
+  font-size: 0.85rem;
 }
 
 .modalActions {
   display: flex;
   justify-content: flex-end;
   gap: 1rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #404040;
+}
+
+.primaryButton, .secondaryButton {
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: none;
 }
 
 .primaryButton {
   background: #3b82f6;
   color: white;
-  padding: 0.5rem 1rem;
-  border-radius: 0.25rem;
-  border: none;
-  cursor: pointer;
-  transition: background-color 0.2s;
 }
 
 .primaryButton:hover {
   background: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.3);
+}
+
+.secondaryButton {
+  background: #374151;
+  color: #e5e7eb;
+}
+
+.secondaryButton:hover {
+  background: #4b5563;
+  transform: translateY(-1px);
+}
+
+/* Custom scrollbar */
+.modalContainer::-webkit-scrollbar {
+  width: 6px;
+}
+
+.modalContainer::-webkit-scrollbar-track {
+  background: #2d2d2d;
+  border-radius: 3px;
+}
+
+.modalContainer::-webkit-scrollbar-thumb {
+  background: #4b5563;
+  border-radius: 3px;
+}
+
+.modalContainer::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
+}
+
+/* Player Card Theme */
+.player {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border: 1px solid #2563eb;
+}
+
+.player:hover {
+  background: linear-gradient(135deg, #1e1e35 0%, #1a2648 100%);
+  box-shadow: 0 0 15px rgba(37, 99, 235, 0.2);
+}
+
+.player .sparklineLabel {
+  color: #93c5fd;
+}
+
+/* Phil Card Theme */
+.phil {
+  background: linear-gradient(135deg, #1e1e1e 0%, #2d1f3d 100%);
+  border: 1px solid #8b5cf6;
+}
+
+.phil:hover {
+  background: linear-gradient(135deg, #232323 0%, #332447 100%);
+  box-shadow: 0 0 15px rgba(139, 92, 246, 0.2);
+}
+
+.phil .sparklineLabel {
+  color: #c4b5fd;
+}
+
+/* IU Card Theme */
+.iu {
+  background: linear-gradient(135deg, #1e1e1e 0%, #3d1f2d 100%);
+  border: 1px solid #ec4899;
+}
+
+.iu:hover {
+  background: linear-gradient(135deg, #232323 0%, #472433 100%);
+  box-shadow: 0 0 15px rgba(236, 72, 153, 0.2);
+}
+
+.iu .sparklineLabel {
+  color: #fbcfe8;
+}
+
+/* Leonardo Card Theme */
+.leonardo {
+  background: linear-gradient(135deg, #1e1e1e 0%, #1f3d2d 100%);
+  border: 1px solid #10b981;
+}
+
+.leonardo:hover {
+  background: linear-gradient(135deg, #232323 0%, #244733 100%);
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.2);
+}
+
+.leonardo .sparklineLabel {
+  color: #a7f3d0;
 } 

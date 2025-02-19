@@ -9,23 +9,34 @@ export default function DaySummaryModal({ isOpen, onClose, dayData }) {
     setIsVisible(isOpen);
   }, [isOpen]);
 
-  const renderAgentCard = (agentId, agent) => (
-    <div className={`${styles.summaryItem} ${styles[agentId]}`}>
-      <h3>{agent.name}</h3>
-      <p className={styles.agentSpecialty}>{agent.specialty}</p>
-      <div className={styles.metrics}>
-        <p>Earnings: <span className={styles.positive}>${agent.earnings.toFixed(2)}</span></p>
-        <p>Losses: <span className={styles.negative}>${agent.losses.toFixed(2)}</span></p>
-        <p>Net Profit: <span className={styles.positive}>${agent.netProfit.toFixed(2)}</span></p>
-        <p>Success Rate: {agent.successRate}%</p>
-        <p>Risk Score: {agent.riskScore}</p>
+  const renderAgentCard = (agentId, agent) => {
+    const sparklineColors = {
+      phil: '#8b5cf6',    // Purple
+      iu: '#ec4899',      // Pink
+      leonardo: '#10b981'  // Green
+    };
+
+    return (
+      <div className={`${styles.summaryItem} ${styles[agentId]}`}>
+        <h3>{agent.name}</h3>
+        <p className={styles.agentSpecialty}>{agent.specialty}</p>
+        <div className={styles.metrics}>
+          <p>Earnings: <span className={styles.positive}>${agent.earnings.toFixed(2)}</span></p>
+          <p>Losses: <span className={styles.negative}>${agent.losses.toFixed(2)}</span></p>
+          <p>Net Profit: <span className={styles.positive}>${agent.netProfit.toFixed(2)}</span></p>
+          <p>Success Rate: {agent.successRate}%</p>
+          <p>Risk Score: {agent.riskScore}</p>
+        </div>
+        <div className={styles.sparkline}>
+          <p className={styles.sparklineLabel}>Performance Trend</p>
+          <PerformanceSparkline 
+            data={agent.performanceHistory} 
+            color={sparklineColors[agentId]}
+          />
+        </div>
       </div>
-      <div className={styles.sparkline}>
-        <p className={styles.sparklineLabel}>Performance Trend</p>
-        <PerformanceSparkline data={agent.performanceHistory} />
-      </div>
-    </div>
-  );
+    );
+  };
 
   const renderPlayerCard = (player) => (
     <div className={`${styles.summaryItem} ${styles.player}`}>
