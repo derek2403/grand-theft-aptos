@@ -1,10 +1,10 @@
 [package]
-name = "nft4"
+name = "nft5"
 version = "1.0.0"
 authors = []
 
 [addresses]
-nft4 = "_" 
+nft5 = "_" 
 
 [dev-addresses]
 

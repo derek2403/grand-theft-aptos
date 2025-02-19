@@ -1,8 +1,7 @@
-module nft4::nft4 {
+module nft5::nft5 {
     use std::error;
     use std::signer;
     use std::string::{Self, String};
-    use std::vector;
     use aptos_framework::account;
     use aptos_framework::event::{Self, EventHandle};
     use aptos_token::token::{Self, TokenDataId};
@@ -11,26 +10,29 @@ module nft4::nft4 {
 
     // Error codes
     const ENO_COLLECTION_MINTED: u64 = 1;
-    const ECOLLECTION_ALREADY_MINTED: u64 = 2;
     const EMINT_LIMIT_REACHED: u64 = 3;
     const ENOT_AUTHORIZED: u64 = 4;
+    const ENO_ACTIVE_COLLECTION: u64 = 5;
 
-    // The fixed address that is authorized to create collections
-    const CREATOR_ADDRESS: address = @0xee870cf134dfd104150cad571d58315e67a8e36a51a16369a369b2d51a045b98;
-
-    struct CollectionInfo has key {
+    struct CollectionInfo has store, drop {
         name: String,
         description: String,
         uri: String,
         supply: u64,
         minted: u64,
         token_data_id: TokenDataId,
-        minters: Table<address, u64>,
+    }
+
+    struct UserCollections has key {
+        collections: Table<String, CollectionInfo>,
+        latest_collection: String,
         mint_events: EventHandle<MintEvent>,
+        minters: Table<address, Table<String, u64>>, // Track mints per collection per user
     }
 
     struct MintEvent has drop, store {
         minter: address,
+        collection_name: String,
         token_data_id: TokenDataId,
         token_name: String,
         timestamp: u64,
@@ -42,9 +44,18 @@ module nft4::nft4 {
         description: String,
         uri: String,
         max_supply: u64,
-    ) {
+    ) acquires UserCollections {
         let creator_addr = signer::address_of(creator);
-        assert!(!exists<CollectionInfo>(creator_addr), error::already_exists(ECOLLECTION_ALREADY_MINTED));
+        
+        // Initialize UserCollections if it doesn't exist
+        if (!exists<UserCollections>(creator_addr)) {
+            move_to(creator, UserCollections {
+                collections: table::new(),
+                latest_collection: name,
+                mint_events: account::new_event_handle<MintEvent>(creator),
+                minters: table::new(),
+            });
+        };
 
         // Create the collection
         token::create_collection(
@@ -75,27 +86,38 @@ module nft4::nft4 {
             vector<String>[string::utf8(b"string")] // property types
         );
 
-        move_to(creator, CollectionInfo {
+        let collection_info = CollectionInfo {
             name,
             description,
             uri,
             supply: max_supply,
             minted: 0,
             token_data_id,
-            minters: table::new(),
-            mint_events: account::new_event_handle<MintEvent>(creator),
-        });
+        };
+
+        let user_collections = borrow_global_mut<UserCollections>(creator_addr);
+        if (table::contains(&user_collections.collections, name)) {
+            table::remove(&mut user_collections.collections, name);
+        };
+        table::add(&mut user_collections.collections, name, collection_info);
+        user_collections.latest_collection = name;
     }
 
     public entry fun mint_nft(
         receiver: &signer,
         creator_addr: address,
-    ) acquires CollectionInfo {
-        // Get collection info from the creator's address
-        let collection_info = borrow_global_mut<CollectionInfo>(creator_addr);
+    ) acquires UserCollections {
+        let user_collections = borrow_global_mut<UserCollections>(creator_addr);
+        let latest_collection_name = user_collections.latest_collection;
+        
+        assert!(table::contains(&user_collections.collections, latest_collection_name), 
+            error::not_found(ENO_ACTIVE_COLLECTION));
+        
+        let collection_info = table::borrow_mut(&mut user_collections.collections, latest_collection_name);
         
         // Check if we haven't reached the maximum supply
-        assert!(collection_info.minted < collection_info.supply, error::invalid_argument(EMINT_LIMIT_REACHED));
+        assert!(collection_info.minted < collection_info.supply, 
+            error::invalid_argument(EMINT_LIMIT_REACHED));
         
         let receiver_addr = signer::address_of(receiver);
 
@@ -115,16 +137,22 @@ module nft4::nft4 {
         collection_info.minted = collection_info.minted + 1;
 
         // Track minter's count
-        if (!table::contains(&collection_info.minters, receiver_addr)) {
-            table::add(&mut collection_info.minters, receiver_addr, 1);
+        if (!table::contains(&user_collections.minters, receiver_addr)) {
+            table::add(&mut user_collections.minters, receiver_addr, table::new());
+        };
+        
+        let minter_collections = table::borrow_mut(&mut user_collections.minters, receiver_addr);
+        if (!table::contains(minter_collections, latest_collection_name)) {
+            table::add(minter_collections, latest_collection_name, 1);
         } else {
-            let minted = table::borrow_mut(&mut collection_info.minters, receiver_addr);
-            *minted = *minted + 1;
+            let count = table::borrow_mut(minter_collections, latest_collection_name);
+            *count = *count + 1;
         };
 
         // Emit mint event
-        event::emit_event(&mut collection_info.mint_events, MintEvent {
+        event::emit_event(&mut user_collections.mint_events, MintEvent {
             minter: receiver_addr,
+            collection_name: latest_collection_name,
             token_data_id: collection_info.token_data_id,
             token_name: string::utf8(b"NFT"),
             timestamp: timestamp::now_seconds(),
@@ -132,14 +160,29 @@ module nft4::nft4 {
     }
 
     #[view]
-    public fun get_minted_count(creator_addr: address, minter: address): u64 acquires CollectionInfo {
-        assert!(exists<CollectionInfo>(creator_addr), error::not_found(ENO_COLLECTION_MINTED));
-        let collection_info = borrow_global<CollectionInfo>(creator_addr);
-        if (table::contains(&collection_info.minters, minter)) {
-            *table::borrow(&collection_info.minters, minter)
-        } else {
+    public fun get_minted_count(creator_addr: address, collection_name: String, minter: address): u64 acquires UserCollections {
+        assert!(exists<UserCollections>(creator_addr), error::not_found(ENO_COLLECTION_MINTED));
+        let user_collections = borrow_global<UserCollections>(creator_addr);
+        assert!(table::contains(&user_collections.collections, collection_name), 
+            error::not_found(ENO_ACTIVE_COLLECTION));
+            
+        if (!table::contains(&user_collections.minters, minter)) {
+            return 0
+        };
+        
+        let minter_collections = table::borrow(&user_collections.minters, minter);
+        if (!table::contains(minter_collections, collection_name)) {
             0
+        } else {
+            *table::borrow(minter_collections, collection_name)
         }
+    }
+
+    #[view]
+    public fun get_latest_collection_name(creator_addr: address): String acquires UserCollections {
+        assert!(exists<UserCollections>(creator_addr), error::not_found(ENO_COLLECTION_MINTED));
+        let user_collections = borrow_global<UserCollections>(creator_addr);
+        user_collections.latest_collection
     }
 }
 
