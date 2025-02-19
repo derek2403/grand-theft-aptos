@@ -162,7 +162,6 @@ export function NPCController() {
     if (!action) return Promise.resolve()
 
     return new Promise(async (resolve) => {
-      // Create base message data
       const messageData = {
         id: Date.now(),
         timestamp: new Date().toLocaleTimeString(),
@@ -179,13 +178,22 @@ export function NPCController() {
         }
       }
 
+      // Clear any existing animations and movement
+      if (character.ref?.current) {
+        character.ref.current.activeGoto = null
+        if (character.animations) {
+          Object.values(character.animations).forEach(anim => {
+            anim.stop()
+          })
+        }
+      }
+
       switch (action.type) {
         case 'goto':
           messageData.text = `is going to ${action.checkpoint}`
           chatLog.addMessage(messageData)
           
           if (character.ref?.current) {
-            // Use the goto utility function
             character.ref.current.activeGoto = goto(
               character.name,
               action.checkpoint,
@@ -193,38 +201,58 @@ export function NPCController() {
                 playAnimation: (name) => {
                   if (character.animations?.[name]) {
                     Object.values(character.animations).forEach(anim => {
-                      anim.fadeOut(0.2)
+                      anim.stop()
                     })
                     character.animations[name].reset().fadeIn(0.2).play()
                   }
                 }
               }
             )
-          }
-          
-          setTimeout(() => {
-            if (character.ref?.current) character.ref.current.activeGoto = null
+
+            // Add a timeout AND check for completion
+            let timeoutId = setTimeout(() => {
+              if (character.ref?.current) {
+                character.ref.current.activeGoto = null
+                if (character.animations?.Stand) {
+                  character.animations.Stand.reset().fadeIn(0.2).play()
+                }
+                resolve()
+              }
+            }, 5000)
+
+            // Check for completion every frame
+            const checkCompletion = () => {
+              if (!character.ref?.current?.activeGoto) {
+                clearTimeout(timeoutId)
+                if (character.animations?.Stand) {
+                  character.animations.Stand.reset().fadeIn(0.2).play()
+                }
+                resolve()
+                return
+              }
+              requestAnimationFrame(checkCompletion)
+            }
+            checkCompletion()
+          } else {
             resolve()
-          }, 5000)
+          }
           break
 
         case 'animation':
           messageData.text = `is ${action.animation.toLowerCase()}`
           chatLog.addMessage(messageData)
 
-          // Use the playAnimation utility function
-          playAnimation(character.name, action.animation, {
-            playAnimation: (name) => {
-              if (character.animations?.[name]) {
-                Object.values(character.animations).forEach(anim => {
-                  anim.fadeOut(0.2)
-                })
-                character.animations[name].reset().fadeIn(0.2).play()
-              }
-            }
-          })
+          if (character.animations?.[action.animation]) {
+            Object.values(character.animations).forEach(anim => {
+              anim.stop()
+            })
+            character.animations[action.animation].reset().fadeIn(0.2).play()
+          }
 
           setTimeout(() => {
+            if (character.animations?.Stand) {
+              character.animations.Stand.reset().fadeIn(0.2).play()
+            }
             resolve()
           }, 3000)
           break
@@ -248,7 +276,10 @@ export function NPCController() {
           }
           chatLog.addMessage(messageData)
 
-          // Use the talkTo utility function
+          // Clear any existing animations for both characters
+          if (character.ref?.current) character.ref.current.activeGoto = null
+          if (targetChar.ref?.current) targetChar.ref.current.activeGoto = null
+
           const interaction = talkTo(
             character.name,
             targetChar.name,
@@ -256,7 +287,7 @@ export function NPCController() {
               playAnimation: (name) => {
                 if (character.animations?.[name]) {
                   Object.values(character.animations).forEach(anim => {
-                    anim.fadeOut(0.2)
+                    anim.stop()
                   })
                   character.animations[name].reset().fadeIn(0.2).play()
                 }
@@ -266,13 +297,21 @@ export function NPCController() {
               playAnimation: (name) => {
                 if (targetChar.animations?.[name]) {
                   Object.values(targetChar.animations).forEach(anim => {
-                    anim.fadeOut(0.2)
+                    anim.stop()
                   })
                   targetChar.animations[name].reset().fadeIn(0.2).play()
                 }
               }
             }
           )
+
+          let timeoutId = setTimeout(() => {
+            if (character.ref?.current) character.ref.current.activeGoto = null
+            if (targetChar.ref?.current) targetChar.ref.current.activeGoto = null
+            if (character.animations?.Stand) character.animations.Stand.reset().fadeIn(0.2).play()
+            if (targetChar.animations?.Stand) targetChar.animations.Stand.reset().fadeIn(0.2).play()
+            resolve()
+          }, 8000)
 
           const updateInterval = setInterval(() => {
             if (character.ref?.current && targetChar.ref?.current) {
@@ -284,11 +323,12 @@ export function NPCController() {
 
               if (done) {
                 clearInterval(updateInterval)
-                setTimeout(() => {
-                  if (character.ref?.current) character.ref.current.activeGoto = null
-                  if (targetChar.ref?.current) targetChar.ref.current.activeGoto = null
-                  resolve()
-                }, 5000)
+                clearTimeout(timeoutId)
+                if (character.ref?.current) character.ref.current.activeGoto = null
+                if (targetChar.ref?.current) targetChar.ref.current.activeGoto = null
+                if (character.animations?.Stand) character.animations.Stand.reset().fadeIn(0.2).play()
+                if (targetChar.animations?.Stand) targetChar.animations.Stand.reset().fadeIn(0.2).play()
+                resolve()
               }
             }
           }, 1000/60)
@@ -298,31 +338,35 @@ export function NPCController() {
           messageData.text = 'is wandering around'
           chatLog.addMessage(messageData)
 
-          // Use the wanderAround utility function
-          const wanderMovement = wanderAround(
-            character.name,
-            {
-              playAnimation: (name) => {
-                if (character.animations?.[name]) {
-                  Object.values(character.animations).forEach(anim => {
-                    anim.fadeOut(0.2)
-                  })
-                  character.animations[name].reset().fadeIn(0.2).play()
+          if (character.ref?.current) {
+            const wanderMovement = wanderAround(
+              character.name,
+              {
+                playAnimation: (name) => {
+                  if (character.animations?.[name]) {
+                    Object.values(character.animations).forEach(anim => {
+                      anim.stop()
+                    })
+                    character.animations[name].reset().fadeIn(0.2).play()
+                  }
                 }
               }
-            }
-          )
+            )
 
-          if (character.ref?.current) {
             character.ref.current.activeGoto = wanderMovement
-          }
 
-          setTimeout(() => {
-            if (character.ref?.current) {
-              character.ref.current.activeGoto = null
-            }
+            setTimeout(() => {
+              if (character.ref?.current) {
+                character.ref.current.activeGoto = null
+                if (character.animations?.Stand) {
+                  character.animations.Stand.reset().fadeIn(0.2).play()
+                }
+              }
+              resolve()
+            }, 10000)
+          } else {
             resolve()
-          }, 10000)
+          }
           break
 
         default:

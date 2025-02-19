@@ -30,6 +30,37 @@
         0,
         -2.7521226414512934
       ]
+    },
+    {
+      "name": "Derekkkk",
+      "occupation": "Web3 and AI Developer, Hackathon Organizer, Blockchain Educator",
+      "mbti": "ENTP",
+      "hobby": "Developing blockchain projects, attending hackathons, and engaging with the tech community",
+      "gender": "male",
+      "characteristics": [
+        "innovative",
+        "enthusiastic",
+        "collaborative",
+        "tech-savvy",
+        "community-oriented"
+      ],
+      "goals": [
+        "Build impactful Web3 applications",
+        "Educate others about blockchain",
+        "Foster a supportive tech community"
+      ],
+      "needs": {
+        "hunger": 80,
+        "energy": 80,
+        "social": 80,
+        "happiness": 80
+      },
+      "id": 1739983397710,
+      "position": [
+        -2.9770524068676485,
+        0,
+        -0.9059500219052747
+      ]
     }
   ]
 }
