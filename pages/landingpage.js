@@ -1,12 +1,10 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
-import { Particles } from "@/components/ui/particles";
 import HeroSection from '@/components/sections/HeroSection';
-import BuiltOn from '@/components/sections/BuiltOn';
 
 export default function LandingPage() {
   return (
-    <div className="relative min-h-screen flex flex-col bg-gradient-to-br from-purple-900 via-black to-purple-900">
+    <div className="relative min-h-screen flex flex-col bg-white">
       <Head>
         <title>Grand Theft Aptos - AI-Powered Gaming Revolution</title>
         <meta name="description" content="Experience the first truly living open world game powered by AI and blockchain technology" />
@@ -16,22 +14,9 @@ export default function LandingPage() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <Particles
-        className="fixed inset-0 -z-10"
-        quantity={300}
-        staticity={20}
-        ease={30}
-        size={0.8}
-        color="#ffffff"
-        refresh={false}
-        vx={0.3}
-        vy={0.2}
-      />
-
       <main className="flex-grow relative z-10">
         <div className="relative">
           <HeroSection />
-          <BuiltOn />
         </div>
       </main>
     </div>

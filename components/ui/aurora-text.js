@@ -4,18 +4,7 @@ import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import React from "react";
 
-interface AuroraTextProps extends React.HTMLAttributes<HTMLElement> {
-  className?: string;
-  children: React.ReactNode;
-  as?: React.ElementType;
-}
-
-export function AuroraText({
-  className,
-  children,
-  as: Component = "span",
-  ...props
-}: AuroraTextProps) {
+export function AuroraText({ className, children, as: Component = "span", ...props }) {
   const MotionComponent = motion(Component);
 
   return (
