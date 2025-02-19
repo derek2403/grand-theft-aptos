@@ -61,6 +61,37 @@
         0,
         -0.9059500219052747
       ]
+    },
+    {
+      "name": "Leonardo da Vinci",
+      "occupation": "Painter",
+      "mbti": "INFJ",
+      "hobby": "Drawing",
+      "gender": "male",
+      "characteristics": [
+        "Creative",
+        "Artistic",
+        "Smart",
+        "Good Design Sense",
+        "Observant"
+      ],
+      "goals": [
+        "Become the best painter",
+        "Become the best painter",
+        "Become the best painter"
+      ],
+      "needs": {
+        "hunger": 80,
+        "energy": 80,
+        "social": 80,
+        "happiness": 80
+      },
+      "id": 1739992907916,
+      "position": [
+        3.6937152036618297,
+        0,
+        0.012720944189476668
+      ]
     }
   ]
 }
