@@ -5,6 +5,8 @@ import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader'
 import * as THREE from 'three'
 import { goto, playAnimation, talkTo } from '../utils/character'
 import NPCData from '../data/NPC.json'
+import { useWallet } from "@aptos-labs/wallet-adapter-react";
+import { transferCoins } from '../utils/coins';
 
 const animationEmoticons = {
   Dancing: '💃',
@@ -24,6 +26,11 @@ const ANIMATIONS = [
   'Talking',
   'Arguing'
 ]
+
+// Hardcoded account address
+const HARDCODED_ACCOUNT = {
+  address: "0x8b95ab1fdca014d470ee7c2e27c74904d16fdbee359787bcb975b0732d66e2b9"
+};
 
 function Dialog({ text }) {
   return (
@@ -165,6 +172,11 @@ export const User = forwardRef(({ character }, ref) => {
   const [radialMenuPosition, setRadialMenuPosition] = useState({ x: 0, y: 0 })
   const [currentAnimation, setCurrentAnimation] = useState(null)
   const [npcs, setNpcs] = useState(NPCData.characters)
+  const [connected, setConnected] = useState(false)
+  const [account, setAccount] = useState(null)
+  const [transactionInProgress, setTransactionInProgress] = useState(false)
+  const [chatLog, setChatLog] = useState([])
+  const { signTransaction } = useWallet();
 
   useEffect(() => {
     const loader = new FBXLoader()
@@ -355,16 +367,51 @@ export const User = forwardRef(({ character }, ref) => {
   }, [])
 
   // Handle radial menu selection
-  const handleRadialSelect = (action) => {
+  const handleRadialSelect = async (action) => {
     setShowRadialMenu(false)
 
     if (action.type === 'talk') {
       const targetNPC = action.target
-      const targetPosition = new THREE.Vector3(
-        targetNPC.position[0],
-        targetNPC.position[1],
-        targetNPC.position[2]
-      )
+      
+      console.log("Talk interaction initiated:", {
+        account: HARDCODED_ACCOUNT,
+        targetNPC: {
+          name: targetNPC.name,
+          walletAddress: targetNPC.walletAddress
+        }
+      });
+
+      try {
+        setTransactionInProgress(true)
+        const randomAmount = Math.floor(Math.random() * 50) + 1 // Random amount 1-50
+        
+        console.log('Initiating transfer:', {
+          from: HARDCODED_ACCOUNT.address,
+          to: targetNPC.walletAddress,
+          amount: randomAmount
+        });
+
+        await transferCoins(
+          HARDCODED_ACCOUNT,
+          signTransaction,
+          HARDCODED_ACCOUNT.address,
+          targetNPC.walletAddress,
+          randomAmount
+        )
+        
+        setChatLog(prev => [...prev, {
+          character: character.name,
+          text: `transferred ${randomAmount} coins to ${targetNPC.name}`
+        }])
+      } catch (error) {
+        console.error('Transfer failed:', error)
+        setChatLog(prev => [...prev, {
+          character: 'System',
+          text: `Failed to transfer coins: ${error.message}`
+        }])
+      } finally {
+        setTransactionInProgress(false)
+      }
 
       // Create interaction using talkTo from character.js
       const interaction = talkTo(
@@ -490,6 +537,36 @@ export const User = forwardRef(({ character }, ref) => {
             position={radialMenuPosition}
             npcs={npcs}
           />
+        </Html>
+      )}
+      {/* Wallet status indicator */}
+      <Html>
+        <div className="fixed top-4 right-4">
+          <div className="bg-green-100 text-green-800 px-4 py-2 rounded-lg">
+            Using Account: {HARDCODED_ACCOUNT.address.slice(0, 6)}...{HARDCODED_ACCOUNT.address.slice(-4)}
+          </div>
+        </div>
+      </Html>
+
+      {/* Transaction progress indicator */}
+      {transactionInProgress && (
+        <Html>
+          <div className="fixed bottom-4 right-4 bg-blue-50 text-blue-600 px-4 py-2 rounded-lg shadow">
+            Transaction in progress...
+          </div>
+        </Html>
+      )}
+
+      {/* Chat log messages */}
+      {chatLog.length > 0 && (
+        <Html>
+          <div className="fixed left-4 bottom-4 max-w-md">
+            {chatLog.slice(-3).map((message, index) => (
+              <div key={index} className="bg-white/90 rounded-lg shadow-md p-2 mb-2">
+                <strong>{message.character}:</strong> {message.text}
+              </div>
+            ))}
+          </div>
         </Html>
       )}
     </>
