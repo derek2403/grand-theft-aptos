@@ -1,9 +1,33 @@
 import { useEffect, useRef, useState } from 'react'
-import { useTexture, useAnimations, Text } from '@react-three/drei'
+import { useTexture, useAnimations, Text, Html } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader'
 import * as THREE from 'three'
 import { useCharacterController } from '../utils/CharacterController'
+
+const animationEmoticons = {
+  Dancing: '💃',
+  Happy: '😊',
+  Sad: '😢',
+  Singing: '🎵',
+  Talking: '💭',
+  Arguing: '😠'
+}
+
+function Dialog({ text }) {
+  return (
+    <div 
+      className="absolute bg-white px-3 py-1 rounded-lg shadow-md text-xl transform -translate-x-1/2 -translate-y-24"
+      style={{
+        pointerEvents: 'none',
+        whiteSpace: 'nowrap'
+      }}
+    >
+      {text}
+      <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 rotate-45 w-3 h-3 bg-white" />
+    </div>
+  )
+}
 
 export function Girl({ character }) {
   const [model, setModel] = useState(null)
@@ -115,6 +139,19 @@ export function Girl({ character }) {
     console.log(`Character is at: ${position.x}, ${position.z}`)
   }, [position])
 
+  useEffect(() => {
+    if (character && animationsLoaded) {
+      character.animations = animationsLoaded
+      character.ref = modelRef
+      
+      // Debug log
+      console.log('Girl animations loaded:', {
+        animationCount: Object.keys(animationsLoaded).length,
+        availableAnimations: Object.keys(animationsLoaded)
+      })
+    }
+  }, [character, animationsLoaded])
+
   if (!model) return null
 
   return (
@@ -125,6 +162,11 @@ export function Girl({ character }) {
         position={character.position}
         rotation={[0, Math.PI, 0]}
       />
+      {modelRef.current?.currentAnimation && (
+        <Html position={[modelRef.current.position.x, modelRef.current.position.y + 2, modelRef.current.position.z]}>
+          <Dialog text={animationEmoticons[modelRef.current.currentAnimation]} />
+        </Html>
+      )}
       {/* Floating name tag with increased height */}
       <Text
         ref={nameTagRef}
