@@ -4,9 +4,11 @@ import { AgentRuntime, LocalSigner, createAptosTools } from "move-agent-kit";
 import { initializeAgentExecutorWithOptions } from "langchain/agents";
 import { HumanMessage, AIMessage } from "@langchain/core/messages";
 import { OpenAIStream } from 'ai';
+import { PrivateKey, PrivateKeyVariants } from "@aptos-labs/ts-sdk";
+import { Tool } from "langchain/tools";
 
 const llm = new ChatOpenAI({
-  temperature: 0.7,
+  temperature: 0,
   modelName: "gpt-4o-mini",
   openAIApiKey: process.env.OPENAI_API_KEY,
   streaming: true,
@@ -16,19 +18,82 @@ export const config = {
   runtime: 'edge',
 };
 
+class GetWalletAddressTool extends Tool {
+  name = "get_wallet_address";
+  description = "Gets the current wallet address. Use this tool ONLY when the user EXPLICITLY asks 'what is my wallet address' or similar address-specific questions. DO NOT use for balance queries.";
+  
+  constructor(accountAddress) {
+    super();
+    this.accountAddress = accountAddress;
+  }
+
+  async _call() {
+    console.log("Custom tool called with address:", this.accountAddress);
+    return this.accountAddress;
+  }
+}
+
+class GetBalanceTool extends Tool {
+  name = "get_balance";
+  description = "Gets the exact current wallet balance in APT. Use this tool ONLY when the user asks about balance, APT amount, or how much APT they have. DO NOT use for address queries.";
+  
+  constructor(aptos, accountAddress) {
+    super();
+    this.aptos = aptos;
+    this.accountAddress = accountAddress;
+  }
+
+  async _call() {
+    try {
+      console.log("Custom balance tool called for address:", this.accountAddress);
+      
+      const resources = await this.aptos.getAccountResources({
+        accountAddress: this.accountAddress
+      });
+      
+      const aptResource = resources.find(
+        (r) => r.type === "0x1::coin::CoinStore<0x1::aptos_coin::AptosCoin>"
+      );
+      
+      if (!aptResource) {
+        throw new Error("APT resource not found");
+      }
+      
+      // Convert to exact decimal string without rounding
+      const rawBalance = BigInt(aptResource.data.coin.value);
+      const balance = (rawBalance * BigInt(100000000) / BigInt(100000000)).toString();
+      const decimalBalance = `${balance.slice(0, -8)}.${balance.slice(-8)}`;
+      
+      console.log("Balance retrieved:", decimalBalance, "APT");
+      return decimalBalance;
+    } catch (error) {
+      console.error("Balance error:", error);
+      throw error;
+    }
+  }
+}
+
 export default async function handler(req) {
   if (req.method !== 'POST') {
     return new Response('Method not allowed', { status: 405 });
   }
 
   try {
+    if (!process.env.APTOS_PRIVATE_KEY) {
+      throw new Error('APTOS_PRIVATE_KEY environment variable is not set');
+    }
+
     const aptosConfig = new AptosConfig({ network: Network.TESTNET });
     const aptos = new Aptos(aptosConfig);
     
+    // Format the private key properly
+    const formattedPrivateKey = PrivateKey.formatPrivateKey(
+      process.env.APTOS_PRIVATE_KEY,
+      PrivateKeyVariants.Ed25519
+    );
+    
     const account = await aptos.deriveAccountFromPrivateKey({
-      privateKey: new Ed25519PrivateKey(
-        process.env.APTOS_PRIVATE_KEY
-      ),
+      privateKey: new Ed25519PrivateKey(formattedPrivateKey),
     });
 
     const signer = new LocalSigner(account, Network.TESTNET);
@@ -47,12 +112,16 @@ export default async function handler(req) {
     console.log("Has wallet tool:", rawTools.some(t => t.name === 'aptos_get_wallet_address'));
     
     // Modify tool descriptions to be shorter
-    const tools = rawTools.map(tool => ({
-      ...tool,
-      description: tool.description.length > 1000 
-        ? tool.description.substring(0, 1000) + "..."
-        : tool.description
-    }));
+    const tools = [
+      new GetWalletAddressTool(account.accountAddress.toString()),
+      new GetBalanceTool(aptos, account.accountAddress.toString()),
+      ...rawTools.map(tool => ({
+        ...tool,
+        description: tool.description.length > 1000 
+          ? tool.description.substring(0, 1000) + "..."
+          : tool.description
+      }))
+    ];
 
     const body = await req.json();
     const { messages } = body;
@@ -64,24 +133,52 @@ export default async function handler(req) {
       );
     }
 
+    // Deduplicate messages by taking only unique messages based on content
+    const uniqueMessages = messages.filter((message, index, self) =>
+      index === self.findIndex((m) => m.content === message.content)
+    );
+
     const executor = await initializeAgentExecutorWithOptions(tools, llm, {
       agentType: "openai-functions",
       verbose: true,
-      systemMessage: `You are a helpful assistant with access to Aptos blockchain tools. 
-        The current wallet address is ${account.accountAddress.toString()}.
-        Available tools: ${tools.map(t => t.name).join(', ')}.
-        To get the wallet address, use the aptos_get_wallet_address tool.`,
+      systemMessage: `You are a blockchain assistant with strict rules for tool usage.
+
+        CRITICAL RULES (MUST FOLLOW):
+        1. Tool Selection:
+           - get_wallet_address: ONLY for "what is my wallet address" queries
+           - get_balance: ONLY for balance/APT amount queries
+           - NEVER use both tools in one response
+           - NEVER mention information from one tool when using the other
+
+        2. Response Formatting:
+           For address queries:
+           - EXACT format: "Your wallet address is: [address]"
+           - NEVER mention balance
+           
+           For balance queries:
+           - EXACT format: "Your wallet balance is: [amount] APT"
+           - NEVER mention address
+           - NEVER use "approximately" or round numbers
+           - Show ALL decimal places
+
+        3. Context Isolation:
+           - Each query is independent
+           - NEVER mix information from different queries
+           - NEVER reference previous responses
+           
+        VIOLATION OF THESE RULES IS NOT ALLOWED UNDER ANY CIRCUMSTANCES.`,
+      memory: null, // Disable memory to prevent context bleeding
     });
 
-    // Convert previous messages to LangChain format
-    const chatHistory = messages.slice(0, -1).map(m => 
+    // Convert previous messages to LangChain format using deduplicated messages
+    const chatHistory = uniqueMessages.slice(0, -1).map(m => 
       m.role === 'user' 
         ? new HumanMessage(m.content)
         : new AIMessage(m.content)
     );
 
     const stream = await executor.stream({
-      input: messages[messages.length - 1].content,
+      input: uniqueMessages[uniqueMessages.length - 1].content,
       chat_history: chatHistory,
     });
 
