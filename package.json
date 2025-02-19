@@ -1,5 +1,5 @@
 {
-  "name": "grand-theft-aptos",
+  "name": "models",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -12,7 +12,9 @@
     "@react-three/drei": "^9.121.5",
     "@react-three/fiber": "^8.17.14",
     "@react-three/postprocessing": "^2.19.1",
+    "axios": "^1.7.9",
     "next": "15.1.7",
+    "openai": "^4.85.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "three": "^0.162.0",

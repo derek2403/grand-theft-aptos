@@ -1,5 +1,30 @@
 import { useState, useEffect } from 'react'
+import { Html } from '@react-three/drei'
 import { checkPosition, getCheckpoints, goto, playAnimation, wanderAround, talkTo } from '../utils/character'
+
+const animationEmoticons = {
+  Dancing: '💃',
+  Happy: '😊',
+  Sad: '😢',
+  Singing: '🎵',
+  Talking: '💭',
+  Arguing: '😠'
+}
+
+function Dialog({ text }) {
+  return (
+    <div 
+      className="absolute bg-white px-3 py-1 rounded-lg shadow-md text-xl transform -translate-x-1/2 -translate-y-24"
+      style={{
+        pointerEvents: 'none',
+        whiteSpace: 'nowrap'
+      }}
+    >
+      {text}
+      <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 rotate-45 w-3 h-3 bg-white" />
+    </div>
+  )
+}
 
 export function CharacterControlTest({ characters }) {
   const [selectedCharacter, setSelectedCharacter] = useState(null)
@@ -169,7 +194,45 @@ export function CharacterControlTest({ characters }) {
       character: selectedCharacter,
       animation: selectedAnimation
     }])
+    console.log('Playing animation:', {
+      animation: selectedAnimation,
+      availableAnimations: Object.keys(selectedCharacter.animations || {}),
+    })
+
+    const animations = selectedCharacter.animations
+    const modelRef = selectedCharacter.ref
+
+    if (!modelRef?.current || !animations) {
+      console.error('Character missing required properties:', {
+        hasModelRef: !!modelRef?.current,
+        hasAnimations: !!animations,
+        animationCount: Object.keys(animations || {}).length
+      })
+      return
+    }
+
+    // Stop any current animations
+    Object.values(animations).forEach(anim => {
+      anim.fadeOut(0.2)
+    })
+
+    // Play new animation
+    if (animations[selectedAnimation]) {
+      animations[selectedAnimation].reset().fadeIn(0.2).play()
+      modelRef.current.currentAnimation = selectedAnimation
+    }
   }
+
+  // Add this debug log
+  useEffect(() => {
+    if (selectedCharacter) {
+      console.log('Selected character:', {
+        hasAnimations: !!selectedCharacter.animations,
+        hasRef: !!selectedCharacter.ref,
+        animations: Object.keys(selectedCharacter.animations || {}),
+      })
+    }
+  }, [selectedCharacter])
 
   const handleWander = () => {
     if (!selectedCharacter?.ref?.current) return

@@ -5,29 +5,70 @@ import { OrbitControls } from '@react-three/drei'
 import { Boy } from './Boy'
 import { Girl } from './Girl'
 
-export function CreateCharacterModal({ showModal, onClose }) {
-  const [characterForm, setCharacterForm] = useState({
-    name: '',
-    occupation: '',
-    mbti: '',
-    age: '',
-    hobby: '',
-    gender: '',
-    characteristics: ['', '', '', '', ''],
-    goals: ['', '', ''],
-    needs: {
-      hunger: 50,
-      energy: 70,
-      social: 30,
-      happiness: 80
-    }
-  })
+export function CreateCharacterModal({ 
+  showModal, 
+  onClose, 
+  onSubmit, 
+  characterForm, 
+  setCharacterForm 
+}) {
+  const [twitterHandle, setTwitterHandle] = useState('')
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [error, setError] = useState('')
 
-  const handleSubmit = async (e) => {
+  const defaultNeeds = {
+    hunger: 80,
+    energy: 80,
+    social: 80,
+    happiness: 80
+  }
+
+  const handleTwitterAnalysis = async () => {
+    if (!twitterHandle) {
+      setError('Please enter a Twitter handle')
+      return
+    }
+
+    setIsAnalyzing(true)
+    setError('')
+
+    try {
+      const response = await fetch('/api/analyze-twitter', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ handle: twitterHandle }),
+      })
+
+      const data = await response.json()
+      
+      if (data.success) {
+        setCharacterForm({
+          name: data.profile.name || '',
+          occupation: data.analysis.occupation || '',
+          mbti: data.analysis.mbti || '',
+          hobby: data.analysis.hobby || '',
+          gender: data.analysis.gender || '',
+          characteristics: data.analysis.characteristics || ['', '', '', '', ''],
+          goals: data.analysis.goals || ['', '', ''],
+          needs: defaultNeeds
+        })
+      } else {
+        setError(data.error || 'Failed to analyze Twitter profile')
+      }
+    } catch (error) {
+      setError('Failed to analyze Twitter profile')
+    } finally {
+      setIsAnalyzing(false)
+    }
+  }
+
+  const handleSubmit = (e) => {
     e.preventDefault()
     if (!characterForm.name || !characterForm.occupation || 
-        !characterForm.mbti || !characterForm.age || 
-        !characterForm.hobby || !characterForm.gender ||
+        !characterForm.mbti || !characterForm.hobby || 
+        !characterForm.gender ||
         characterForm.characteristics.some(char => !char) ||
         characterForm.goals.some(goal => !goal)) {
       alert("Please fill in all fields")
@@ -149,8 +190,25 @@ export function CreateCharacterModal({ showModal, onClose }) {
         </button>
       </div>
 
-      {/* Show character preview if gender is selected */}
-      {characterForm.gender && <CharacterPreview />}
+      <div className="mb-4 p-4 border rounded">
+        <h3 className="text-lg mb-2">Import from Twitter</h3>
+        <div className="flex gap-2">
+          <input
+            className="flex-1 p-2 border rounded"
+            placeholder="Enter Twitter handle"
+            value={twitterHandle}
+            onChange={(e) => setTwitterHandle(e.target.value)}
+          />
+          <button
+            onClick={handleTwitterAnalysis}
+            disabled={isAnalyzing}
+            className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600 disabled:bg-gray-400"
+          >
+            {isAnalyzing ? 'Analyzing...' : 'Import'}
+          </button>
+        </div>
+        {error && <p className="text-red-500 mt-2 text-sm">{error}</p>}
+      </div>
 
       <form onSubmit={handleSubmit}>
         <input
@@ -173,14 +231,6 @@ export function CreateCharacterModal({ showModal, onClose }) {
           placeholder="MBTI"
           value={characterForm.mbti}
           onChange={e => setCharacterForm(prev => ({ ...prev, mbti: e.target.value }))}
-        />
-        <input
-          required
-          type="number"
-          className="w-full mb-2 p-2 border rounded"
-          placeholder="Age"
-          value={characterForm.age}
-          onChange={e => setCharacterForm(prev => ({ ...prev, age: e.target.value }))}
         />
         <input
           required
