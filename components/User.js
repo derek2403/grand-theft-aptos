@@ -7,6 +7,8 @@ import { goto, playAnimation, talkTo } from '../utils/character'
 import NPCData from '../data/NPC.json'
 import { useWallet } from "@aptos-labs/wallet-adapter-react";
 import { transferCoins } from '../utils/coins';
+import { submitSponsoredNFTTransaction } from '../utils/nft';
+import { generateImage } from '../utils/dalle';
 
 const animationEmoticons = {
   Dancing: '💃',
@@ -177,6 +179,8 @@ export const User = forwardRef(({ character }, ref) => {
   const [transactionInProgress, setTransactionInProgress] = useState(false)
   const [chatLog, setChatLog] = useState([])
   const { signTransaction } = useWallet();
+  const [nftCollectionCreated, setNftCollectionCreated] = useState(false);
+  const [nftCollectionCount, setNftCollectionCount] = useState(0);
 
   useEffect(() => {
     const loader = new FBXLoader()
@@ -368,49 +372,79 @@ export const User = forwardRef(({ character }, ref) => {
 
   // Handle radial menu selection
   const handleRadialSelect = async (action) => {
-    setShowRadialMenu(false)
+    setShowRadialMenu(false);
 
     if (action.type === 'talk') {
-      const targetNPC = action.target
+      const targetNPC = action.target;
       
-      console.log("Talk interaction initiated:", {
-        account: HARDCODED_ACCOUNT,
-        targetNPC: {
-          name: targetNPC.name,
-          walletAddress: targetNPC.walletAddress
-        }
-      });
-
       try {
-        setTransactionInProgress(true)
-        const randomAmount = Math.floor(Math.random() * 50) + 1 // Random amount 1-50
+        setTransactionInProgress(true);
         
-        console.log('Initiating transfer:', {
-          from: HARDCODED_ACCOUNT.address,
-          to: targetNPC.walletAddress,
-          amount: randomAmount
-        });
-
+        // Do coin transfer first
+        const randomAmount = Math.floor(Math.random() * 50) + 1;
         await transferCoins(
           HARDCODED_ACCOUNT,
           signTransaction,
           HARDCODED_ACCOUNT.address,
           targetNPC.walletAddress,
           randomAmount
-        )
+        );
         
-        setChatLog(prev => [...prev, {
-          character: character.name,
-          text: `transferred ${randomAmount} coins to ${targetNPC.name}`
-        }])
+        // Additional NFT creation for Leonardo da Vinci (npc2)
+        if (targetNPC.id === 'npc2') {
+          // Generate unique collection name using timestamp, random numbers and address
+          const timestamp = Date.now().toString();
+          const randomBytes = new Uint8Array(8);
+          crypto.getRandomValues(randomBytes);
+          const randomHex = Array.from(randomBytes)
+            .map(b => b.toString(16).padStart(2, '0'))
+            .join('');
+          const uniqueString = `${timestamp}-${randomHex}-${HARDCODED_ACCOUNT.address.slice(-8)}`;
+          const collectionName = `Collection_${uniqueString}`;
+
+          // Generate image using DALL-E
+          const prompt = "A Renaissance-style portrait in the style of Leonardo da Vinci";
+          const imageUrl = await generateImage(prompt);
+          console.log('Generated DALL-E image URL:', imageUrl);
+
+          // Create collection with unique name
+          await submitSponsoredNFTTransaction(
+            HARDCODED_ACCOUNT,
+            signTransaction,
+            'create_collection',
+            [
+              collectionName,
+              `Unique Collection ${timestamp}`,
+              imageUrl,
+              1000 // max_supply
+            ]
+          );
+
+          // Mint NFT in the new collection
+          await submitSponsoredNFTTransaction(
+            HARDCODED_ACCOUNT,
+            signTransaction,
+            'mint_nft',
+            [HARDCODED_ACCOUNT.address]
+          );
+
+          setChatLog(prev => [...prev, {
+            character: character.name,
+            text: `transferred ${randomAmount} coins to ${targetNPC.name}`
+          }, {
+            character: 'Leonardo da Vinci',
+            text: `Created unique collection and minted an NFT for you!`
+          }]);
+        }
+
       } catch (error) {
-        console.error('Transfer failed:', error)
+        console.error('Transaction failed:', error);
         setChatLog(prev => [...prev, {
           character: 'System',
-          text: `Failed to transfer coins: ${error.message}`
-        }])
+          text: `Failed to complete transaction: ${error.message}`
+        }]);
       } finally {
-        setTransactionInProgress(false)
+        setTransactionInProgress(false);
       }
 
       // Create interaction using talkTo from character.js
@@ -421,9 +455,9 @@ export const User = forwardRef(({ character }, ref) => {
           ref: modelRef.current,
           playAnimation: (name) => {
             if (animationsLoaded[name]) {
-              Object.values(animationsLoaded).forEach(anim => anim.stop())
-              animationsLoaded[name].reset().fadeIn(0.5).play()
-              setCurrentAnimation(name)
+              Object.values(animationsLoaded).forEach(anim => anim.stop());
+              animationsLoaded[name].reset().fadeIn(0.5).play();
+              setCurrentAnimation(name);
             }
           }
         },
@@ -431,35 +465,34 @@ export const User = forwardRef(({ character }, ref) => {
           ref: targetNPC.ref?.current,
           playAnimation: (name) => {
             if (targetNPC.animations?.[name]) {
-              Object.values(targetNPC.animations).forEach(anim => anim.stop())
-              targetNPC.animations[name].reset().fadeIn(0.5).play()
+              Object.values(targetNPC.animations).forEach(anim => anim.stop());
+              targetNPC.animations[name].reset().fadeIn(0.5).play();
             }
           }
         }
-      )
+      );
 
       // Store the interaction
       setActiveMovement({
         update: (model, delta) => {
-          if (!model || !targetNPC.ref?.current) return false
-          const done = interaction.update(model, targetNPC.ref.current, delta)
+          if (!model || !targetNPC.ref?.current) return false;
+          const done = interaction.update(model, targetNPC.ref.current, delta);
           
           if (done) {
             // Reset both characters to idle state
             if (animationsLoaded.Stand) {
-              Object.values(animationsLoaded).forEach(anim => anim.stop())
-              animationsLoaded.Stand.reset().fadeIn(0.5).play()
-              setCurrentAnimation('Stand')
+              Object.values(animationsLoaded).forEach(anim => anim.stop());
+              animationsLoaded.Stand.reset().fadeIn(0.5).play();
+              setCurrentAnimation('Stand');
             }
             if (targetNPC.animations?.Stand) {
-              Object.values(targetNPC.animations).forEach(anim => anim.stop())
-              targetNPC.animations.Stand.reset().fadeIn(0.5).play()
+              Object.values(targetNPC.animations).forEach(anim => anim.stop());
+              targetNPC.animations.Stand.reset().fadeIn(0.5).play();
             }
           }
-          
-          return done
+          return done;
         }
-      })
+      });
 
       // Signal NPC controller to handle NPC's side of interaction
       if (window.npcController) {

@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { Aptos, AptosConfig, Network, Account } from "@aptos-labs/ts-sdk";
 import { Button } from "../components/ui/button";
 
-const MODULE_ADDRESS = "0x6d1f906b2b12cb4c01119327bf3ea9a64fa578c66e46ab30c314bd359f80d090";
+const MODULE_ADDRESS = "0xc18ba9c71683d205b0d0ff908dd9b4c0b9c992c9c9532e74f26e71d2604e835f";
 const SPONSOR_ADDRESS = "0x7bda16775910109bd87aef69fcb4cdeb8c3defbfd51332fd025252f7b2172aa3";
 
 // Initialize Aptos client with testnet

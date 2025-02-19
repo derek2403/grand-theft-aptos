@@ -20,8 +20,7 @@ export function CreateCharacterModal({
       social: 80,
       happiness: 80
     },
-    publicKey: '0x89795bb5cdb7ea1a8de18eb06374344bb4dae6b6b5b35b03a0cf0c1437f27682',
-    privateKey: '0x052781471ca4f1403c53fb903a08bc3c5b05714e5e5629005c72207d1e8c2df0'
+    walletAddress: '0x6efb01899fcd73e335bf24178ddb82f8d400ae533f8c44790b067f0821c1d1ad'
   })
   const [twitterHandle, setTwitterHandle] = useState('')
   const [isAnalyzing, setIsAnalyzing] = useState(false)
@@ -65,8 +64,7 @@ export function CreateCharacterModal({
           characteristics: data.analysis.characteristics || ['', '', '', '', ''],
           goals: data.analysis.goals || ['', '', ''],
           needs: defaultNeeds,
-          publicKey: '0x89795bb5cdb7ea1a8de18eb06374344bb4dae6b6b5b35b03a0cf0c1437f27682',
-          privateKey: '0x052781471ca4f1403c53fb903a08bc3c5b05714e5e5629005c72207d1e8c2df0'
+          walletAddress: '0x6efb01899fcd73e335bf24178ddb82f8d400ae533f8c44790b067f0821c1d1ad'
         }
         console.log('Setting character form:', newCharacterForm)
         setCharacterForm(newCharacterForm)
@@ -85,18 +83,13 @@ export function CreateCharacterModal({
     e.preventDefault()
     if (!characterForm.name || !characterForm.occupation || 
         !characterForm.mbti || !characterForm.hobby || 
-        !characterForm.gender ||
-        characterForm.characteristics.some(char => !char) ||
-        characterForm.goals.some(goal => !goal)) {
-      alert("Please fill in all fields")
+        !characterForm.gender || 
+        !characterForm.characteristics.every(c => c) || 
+        !characterForm.goals.every(g => g)) {
       return
     }
-    
-    if (typeof onSubmit === 'function') {
-      onSubmit(characterForm)
-    } else {
-      console.warn('No onSubmit handler provided to CreateCharacterModal')
-    }
+    onSubmit(characterForm)
+    onClose()
   }
 
   const handleRandomize = () => {
@@ -105,8 +98,7 @@ export function CreateCharacterModal({
       ...presets.characters[randomIndex],
       needs: defaultNeeds,
       goals: ["Learn AI", "Make new friends", "Buy a house"],
-      publicKey: '0x89795bb5cdb7ea1a8de18eb06374344bb4dae6b6b5b35b03a0cf0c1437f27682',
-      privateKey: '0x052781471ca4f1403c53fb903a08bc3c5b05714e5e5629005c72207d1e8c2df0'
+      walletAddress: '0x6efb01899fcd73e335bf24178ddb82f8d400ae533f8c44790b067f0821c1d1ad'
     }
     setCharacterForm(randomCharacter)
   }
