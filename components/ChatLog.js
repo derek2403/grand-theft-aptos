@@ -63,18 +63,12 @@ export function ChatLog() {
 
   // Add a new message to the chat
   const addMessage = async (message) => {
-    // If it's a system message, add it directly
+    // Skip system messages
     if (message.character === 'System') {
-      setMessages(prev => [...prev, {
-        id: Date.now(),
-        timestamp: new Date().toLocaleTimeString(),
-        character: 'System',
-        text: message.text
-      }])
       return
     }
 
-    // Add the initial action message
+    // Add the message
     setMessages(prev => [...prev, {
       id: message.id || Date.now(),
       timestamp: message.timestamp || new Date().toLocaleTimeString(),
