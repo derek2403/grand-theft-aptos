@@ -1,10 +1,10 @@
 [package]
-name = "coins1"
+name = "coins4"
 version = "1.0.0"
 authors = []
 
 [addresses]
-coins1 = "_"
+coins4 = "_"
 
 [dev-addresses]
 
