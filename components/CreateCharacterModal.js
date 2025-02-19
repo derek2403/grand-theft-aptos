@@ -1,13 +1,31 @@
-import React from 'react'
+import React, { useState } from 'react'
 import presets from '../data/presets.json'
 
 export function CreateCharacterModal({ 
   showModal, 
-  onClose, 
-  onSubmit, 
-  characterForm, 
-  setCharacterForm 
+  onClose = () => {},
+  onSubmit = (form) => console.log('Form submitted:', form)
 }) {
+  const [characterForm, setCharacterForm] = useState({
+    name: '',
+    occupation: '',
+    mbti: '',
+    hobby: '',
+    gender: '',
+    characteristics: ['', '', '', '', ''],
+    goals: ['', '', ''],
+    needs: {
+      hunger: 80,
+      energy: 80,
+      social: 80,
+      happiness: 80
+    },
+    walletAddress: '0x6efb01899fcd73e335bf24178ddb82f8d400ae533f8c44790b067f0821c1d1ad'
+  })
+  const [twitterHandle, setTwitterHandle] = useState('')
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [error, setError] = useState('')
+
   const defaultNeeds = {
     hunger: 80,
     energy: 80,
@@ -15,20 +33,63 @@ export function CreateCharacterModal({
     happiness: 80
   }
 
+  const handleTwitterAnalysis = async () => {
+    if (!twitterHandle) {
+      setError('Please enter a Twitter handle')
+      return
+    }
+
+    setIsAnalyzing(true)
+    setError('')
+
+    try {
+      const response = await fetch('/api/analyze-twitter', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ handle: twitterHandle }),
+      })
+
+      const data = await response.json()
+      console.log('Twitter Analysis Response:', data)
+      
+      if (data.success && data.profile && data.analysis) {
+        const newCharacterForm = {
+          name: data.profile.name || '',
+          occupation: data.analysis.occupation || '',
+          mbti: data.analysis.mbti || '',
+          hobby: data.analysis.hobby || '',
+          gender: data.analysis.gender || '',
+          characteristics: data.analysis.characteristics || ['', '', '', '', ''],
+          goals: data.analysis.goals || ['', '', ''],
+          needs: defaultNeeds,
+          walletAddress: '0x6efb01899fcd73e335bf24178ddb82f8d400ae533f8c44790b067f0821c1d1ad'
+        }
+        console.log('Setting character form:', newCharacterForm)
+        setCharacterForm(newCharacterForm)
+      } else {
+        setError(data.error || 'Failed to analyze Twitter profile')
+      }
+    } catch (error) {
+      console.error('Twitter Analysis Error:', error)
+      setError('Failed to analyze Twitter profile')
+    } finally {
+      setIsAnalyzing(false)
+    }
+  }
+
   const handleSubmit = (e) => {
     e.preventDefault()
     if (!characterForm.name || !characterForm.occupation || 
-        !characterForm.mbti || !characterForm.age || 
-        !characterForm.hobby || !characterForm.gender ||
-        characterForm.characteristics.some(char => !char) ||
-        characterForm.goals.some(goal => !goal)) {
-      alert("Please fill in all fields")
+        !characterForm.mbti || !characterForm.hobby || 
+        !characterForm.gender || 
+        !characterForm.characteristics.every(c => c) || 
+        !characterForm.goals.every(g => g)) {
       return
     }
-    onSubmit({
-      ...characterForm,
-      needs: defaultNeeds
-    })
+    onSubmit(characterForm)
+    onClose()
   }
 
   const handleRandomize = () => {
@@ -36,7 +97,8 @@ export function CreateCharacterModal({
     const randomCharacter = {
       ...presets.characters[randomIndex],
       needs: defaultNeeds,
-      goals: ["Learn AI", "Make new friends", "Buy a house"]
+      goals: ["Learn AI", "Make new friends", "Buy a house"],
+      walletAddress: '0x6efb01899fcd73e335bf24178ddb82f8d400ae533f8c44790b067f0821c1d1ad'
     }
     setCharacterForm(randomCharacter)
   }
@@ -55,6 +117,27 @@ export function CreateCharacterModal({
           <span>🎲</span> Random
         </button>
       </div>
+
+      <div className="mb-4 p-4 border rounded">
+        <h3 className="text-lg mb-2">Import from Twitter</h3>
+        <div className="flex gap-2">
+          <input
+            className="flex-1 p-2 border rounded"
+            placeholder="Enter Twitter handle"
+            value={twitterHandle}
+            onChange={(e) => setTwitterHandle(e.target.value)}
+          />
+          <button
+            onClick={handleTwitterAnalysis}
+            disabled={isAnalyzing}
+            className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600 disabled:bg-gray-400"
+          >
+            {isAnalyzing ? 'Analyzing...' : 'Import'}
+          </button>
+        </div>
+        {error && <p className="text-red-500 mt-2 text-sm">{error}</p>}
+      </div>
+
       <form onSubmit={handleSubmit}>
         <input
           required
@@ -76,14 +159,6 @@ export function CreateCharacterModal({
           placeholder="MBTI"
           value={characterForm.mbti}
           onChange={e => setCharacterForm(prev => ({ ...prev, mbti: e.target.value }))}
-        />
-        <input
-          required
-          type="number"
-          className="w-full mb-2 p-2 border rounded"
-          placeholder="Age"
-          value={characterForm.age}
-          onChange={e => setCharacterForm(prev => ({ ...prev, age: e.target.value }))}
         />
         <input
           required
@@ -135,35 +210,6 @@ export function CreateCharacterModal({
               }}
             />
           ))}
-        </div>
-        <div className="mb-2">
-          <p className="mb-1">Initial Needs:</p>
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="text-sm">Hunger: 80</label>
-              <div className="w-full bg-gray-200 rounded h-2">
-                <div className="bg-blue-500 h-2 rounded" style={{width: '80%'}}></div>
-              </div>
-            </div>
-            <div>
-              <label className="text-sm">Energy: 80</label>
-              <div className="w-full bg-gray-200 rounded h-2">
-                <div className="bg-green-500 h-2 rounded" style={{width: '80%'}}></div>
-              </div>
-            </div>
-            <div>
-              <label className="text-sm">Social: 80</label>
-              <div className="w-full bg-gray-200 rounded h-2">
-                <div className="bg-yellow-500 h-2 rounded" style={{width: '80%'}}></div>
-              </div>
-            </div>
-            <div>
-              <label className="text-sm">Happiness: 80</label>
-              <div className="w-full bg-gray-200 rounded h-2">
-                <div className="bg-pink-500 h-2 rounded" style={{width: '80%'}}></div>
-              </div>
-            </div>
-          </div>
         </div>
         <div className="flex gap-2">
           <button

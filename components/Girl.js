@@ -1,9 +1,33 @@
 import { useEffect, useRef, useState } from 'react'
-import { useTexture, useAnimations, Text } from '@react-three/drei'
-import { useFrame } from '@react-three/fiber'
+import { useTexture, useAnimations, Text, Html } from '@react-three/drei'
+import { useFrame, useThree } from '@react-three/fiber'
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader'
 import * as THREE from 'three'
 import { useCharacterController } from '../utils/CharacterController'
+
+const animationEmoticons = {
+  Dancing: '💃',
+  Happy: '😊',
+  Sad: '😢',
+  Singing: '🎵',
+  Talking: '💭',
+  Arguing: '😠'
+}
+
+function Dialog({ text }) {
+  return (
+    <div 
+      className="absolute bg-white px-3 py-1 rounded-lg shadow-md text-xl transform -translate-x-1/2 -translate-y-24"
+      style={{
+        pointerEvents: 'none',
+        whiteSpace: 'nowrap'
+      }}
+    >
+      {text}
+      <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 rotate-45 w-3 h-3 bg-white" />
+    </div>
+  )
+}
 
 export function Girl({ character }) {
   const [model, setModel] = useState(null)
@@ -13,6 +37,8 @@ export function Girl({ character }) {
   const mixerRef = useRef()
   const spotlightRef = useRef()
   const nameTagRef = useRef()
+  const { camera } = useThree()
+  const activeGotoRef = useRef(null)
 
   useEffect(() => {
     const loader = new FBXLoader()
@@ -88,17 +114,39 @@ export function Girl({ character }) {
       mixerRef.current.update(delta)
     }
 
+    // Update goto movement if active
+    if (modelRef.current?.activeGoto) {
+      const finished = modelRef.current.activeGoto.update(modelRef.current, delta)
+      if (finished) {
+        // Clear the goto reference and ensure standing animation
+        modelRef.current.activeGoto = null
+        if (animationsLoaded.Run) {
+          animationsLoaded.Run.fadeOut(0.2) // Fade out running animation
+        }
+        if (animationsLoaded.Stand) {
+          animationsLoaded.Stand.reset().fadeIn(0.2).play()
+        }
+      }
+    }
+
     if (modelRef.current && spotlightRef.current) {
       const position = modelRef.current.position
       // Position the light directly above the character
       spotlightRef.current.position.set(position.x, position.y + 5, position.z)
-      // Target directly below the light (at character position)
       spotlightRef.current.target.position.set(position.x, position.y, position.z)
       spotlightRef.current.target.updateMatrixWorld()
 
-      // Update name tag position to follow character - increased height to 5 units
+      // Update name tag position and rotation to face camera
       if (nameTagRef.current) {
         nameTagRef.current.position.set(position.x, position.y + 3.5, position.z)
+        
+        // Calculate direction to camera
+        const directionToCamera = new THREE.Vector3()
+        directionToCamera.subVectors(camera.position, nameTagRef.current.position)
+        
+        // Calculate rotation to face camera
+        const angleToCamera = Math.atan2(directionToCamera.x, directionToCamera.z)
+        nameTagRef.current.rotation.y = angleToCamera
       }
     }
   })
@@ -115,6 +163,46 @@ export function Girl({ character }) {
     console.log(`Character is at: ${position.x}, ${position.z}`)
   }, [position])
 
+  useEffect(() => {
+    if (character && animationsLoaded) {
+      character.animations = animationsLoaded
+      character.ref = modelRef
+      
+      // Add animation event handlers to track current animation
+      Object.entries(animationsLoaded).forEach(([name, action]) => {
+        action.getMixer().addEventListener('loop', () => {
+          if (action.isRunning()) {
+            modelRef.current.currentAnimation = name
+          }
+        })
+        
+        action.getMixer().addEventListener('finished', () => {
+          if (action.isRunning()) {
+            modelRef.current.currentAnimation = null
+          }
+        })
+      })
+
+      // Debug log
+      console.log('Girl animations loaded:', {
+        animationCount: Object.keys(animationsLoaded).length,
+        availableAnimations: Object.keys(animationsLoaded)
+      })
+    }
+  }, [character, animationsLoaded])
+
+  // Add this useEffect to update currentAnimation when animations change
+  useEffect(() => {
+    if (modelRef.current && mixerRef.current) {
+      const runningActions = Object.entries(animationsLoaded).filter(([_, action]) => action.isRunning())
+      if (runningActions.length > 0) {
+        modelRef.current.currentAnimation = runningActions[0][0]
+      } else {
+        modelRef.current.currentAnimation = null
+      }
+    }
+  }, [animationsLoaded])
+
   if (!model) return null
 
   return (
@@ -125,21 +213,24 @@ export function Girl({ character }) {
         position={character.position}
         rotation={[0, Math.PI, 0]}
       />
-      {/* Floating name tag with increased height */}
-      <Text
+      {/* Billboard name tag that always faces camera */}
+      <group
         ref={nameTagRef}
-        position={[character.position[0], character.position[1] + 5, character.position[2]]}
-        fontSize={0.5}
-        color="white"
-        anchorX="center"
-        anchorY="middle"
-        outlineWidth={0.1}
-        outlineColor="black"
-        renderOrder={1}
-        depthOffset={-1}
+        position={[character.position[0], character.position[1] + 3.5, character.position[2]]}
       >
-        {character.name}
-      </Text>
+        <Text
+          fontSize={0.5}
+          color="white"
+          anchorX="center"
+          anchorY="middle"
+          outlineWidth={0.1}
+          outlineColor="black"
+          renderOrder={1}
+          depthOffset={-1}
+        >
+          {character.name}
+        </Text>
+      </group>
       <group>
         <spotLight
           ref={spotlightRef}
@@ -155,6 +246,11 @@ export function Girl({ character }) {
           <primitive object={new THREE.Object3D()} attach="target" />
         </spotLight>
       </group>
+      {modelRef.current?.currentAnimation && (
+        <Html position={[modelRef.current.position.x, modelRef.current.position.y + 2, modelRef.current.position.z]}>
+          <Dialog text={animationEmoticons[modelRef.current.currentAnimation]} />
+        </Html>
+      )}
     </>
   )
 } 
