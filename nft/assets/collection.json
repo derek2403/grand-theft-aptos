@@ -1,0 +1,12 @@
+{
+    "description": "This is Mona Lisa",
+    "image": "",
+    "name": "This is Mona Lisa",
+    "external_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Mona_Lisa%2C_by_Leonardo_da_Vinci%2C_from_C2RMF_retouched.jpg/800px-Mona_Lisa%2C_by_Leonardo_da_Vinci%2C_from_C2RMF_retouched.jpg",
+    "attributes": [
+      {
+        "trait_type": "Type",
+        "value": "Image"
+      }
+    ]
+  }
