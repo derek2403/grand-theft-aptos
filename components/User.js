@@ -1,8 +1,10 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, forwardRef } from 'react'
 import { useTexture, useAnimations, Text, Html } from '@react-three/drei'
 import { useFrame, useThree } from '@react-three/fiber'
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader'
 import * as THREE from 'three'
+import { goto, playAnimation, talkTo } from '../utils/character'
+import NPCData from '../data/NPC.json'
 
 const animationEmoticons = {
   Dancing: '💃',
@@ -12,6 +14,16 @@ const animationEmoticons = {
   Talking: '💭',
   Arguing: '😠'
 }
+
+// Available animations from character.js
+const ANIMATIONS = [
+  'Dancing',
+  'Happy',
+  'Sad',
+  'Singing',
+  'Talking',
+  'Arguing'
+]
 
 function Dialog({ text }) {
   return (
@@ -28,19 +40,135 @@ function Dialog({ text }) {
   )
 }
 
-export function User({ gender = 'men', character }) {
+// Radial Menu Component
+function RadialMenu({ onSelect, onClose, position, npcs }) {
+  const radius = 150 // Increased radius for better visibility
+  const totalItems = ANIMATIONS.length + npcs.length
+  const angleStep = (2 * Math.PI) / totalItems
+  const keyMap = ['Z', 'X', 'C', 'V', 'B', 'N', 'M', 'K', 'L'] // Add more keys if needed
+
+  // Handle keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      const key = event.key.toUpperCase()
+      const index = keyMap.indexOf(key)
+      if (index !== -1 && index < totalItems) {
+        event.preventDefault()
+        if (index < ANIMATIONS.length) {
+          onSelect({ type: 'animation', name: ANIMATIONS[index] })
+        } else {
+          onSelect({ type: 'talk', target: npcs[index - ANIMATIONS.length] })
+        }
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [onSelect, npcs])
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        left: '50%',
+        top: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: radius * 2,
+        height: radius * 2,
+        pointerEvents: 'none'
+      }}
+    >
+      {/* Circular background */}
+      <div
+        style={{
+          position: 'absolute',
+          width: '100%',
+          height: '100%',
+          borderRadius: '50%',
+          background: 'rgba(0, 0, 0, 0.7)',
+          border: '2px solid rgba(255, 255, 255, 0.3)'
+        }}
+      />
+
+      {/* Menu items */}
+      {ANIMATIONS.concat(npcs.map(npc => ({ name: `Talk to ${npc.name}`, type: 'talk', target: npc }))).map((item, index) => {
+        const angle = angleStep * index - Math.PI / 2 // Start from top
+        const x = Math.cos(angle) * (radius - 40)
+        const y = Math.sin(angle) * (radius - 40)
+        const isAnimation = index < ANIMATIONS.length
+
+        return (
+          <div
+            key={isAnimation ? item : item.target.id}
+            style={{
+              position: 'absolute',
+              left: '50%',
+              top: '50%',
+              transform: `translate(${x}px, ${y}px)`,
+              color: 'white',
+              textAlign: 'center',
+              width: '120px',
+              marginLeft: '-60px',
+              textShadow: '2px 2px 2px rgba(0, 0, 0, 0.5)'
+            }}
+          >
+            {/* Action label */}
+            <div style={{ fontSize: '16px', marginBottom: '4px' }}>
+              {isAnimation ? item : item.name}
+            </div>
+            {/* Key hint */}
+            <div
+              style={{
+                background: 'rgba(255, 255, 255, 0.2)',
+                padding: '2px 8px',
+                borderRadius: '4px',
+                display: 'inline-block',
+                fontSize: '14px'
+              }}
+            >
+              [{keyMap[index]}]
+            </div>
+          </div>
+        )
+      })}
+
+      {/* Center dot */}
+      <div
+        style={{
+          position: 'absolute',
+          left: '50%',
+          top: '50%',
+          width: '8px',
+          height: '8px',
+          background: 'white',
+          borderRadius: '50%',
+          transform: 'translate(-50%, -50%)'
+        }}
+      />
+    </div>
+  )
+}
+
+export const User = forwardRef(({ character }, ref) => {
   const [model, setModel] = useState(null)
   const [animationsLoaded, setAnimationsLoaded] = useState({})
-  const texture = useTexture(gender === 'men' ? '/men/shaded.png' : '/women/shaded.png')
+  const texture = useTexture(character.gender === 'men' ? '/men/shaded.png' : '/women/shaded.png')
   const modelRef = useRef()
   const mixerRef = useRef()
   const spotlightRef = useRef()
   const nameTagRef = useRef()
   const { camera } = useThree()
+  const [targetPosition, setTargetPosition] = useState(null)
+  const [activeMovement, setActiveMovement] = useState(null)
+  const [isAnimationsLoaded, setIsAnimationsLoaded] = useState(false)
+  const [showRadialMenu, setShowRadialMenu] = useState(false)
+  const [radialMenuPosition, setRadialMenuPosition] = useState({ x: 0, y: 0 })
+  const [currentAnimation, setCurrentAnimation] = useState(null)
+  const [npcs] = useState(NPCData.characters)
 
   useEffect(() => {
     const loader = new FBXLoader()
-    const modelPath = gender === 'men' ? '/men/Men.fbx' : '/women/Women.fbx'
+    const modelPath = character.gender === 'men' ? '/men/Men.fbx' : '/women/Women.fbx'
     
     loader.load(modelPath, (fbx) => {
       fbx.traverse((child) => {
@@ -106,7 +234,7 @@ export function User({ gender = 'men', character }) {
         mixerRef.current.stopAllAction()
       }
     }
-  }, [texture, gender])
+  }, [texture, character.gender])
 
   // Handle click movement
   useEffect(() => {
@@ -201,6 +329,53 @@ export function User({ gender = 'men', character }) {
     }
   })
 
+  // Handle spacebar for radial menu
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.code === 'Space') {
+        event.preventDefault()
+        setShowRadialMenu(true)
+        setRadialMenuPosition({
+          x: window.innerWidth / 2,
+          y: window.innerHeight / 2,
+        })
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
+
+  // Handle radial menu selection
+  const handleRadialSelect = (action) => {
+    setShowRadialMenu(false)
+
+    if (action.type === 'animation') {
+      if (animationsLoaded[action.name]) {
+        Object.values(animationsLoaded).forEach(anim => anim.stop())
+        animationsLoaded[action.name].reset().fadeIn(0.5).play()
+        setCurrentAnimation(action.name)
+      }
+    } else if (action.type === 'talk') {
+      const npcRef = { current: null }
+      const talkInteraction = talkTo(
+        character.name,
+        action.target.name,
+        {
+          playAnimation: (name) => {
+            if (animationsLoaded[name]) {
+              Object.values(animationsLoaded).forEach(anim => anim.stop())
+              animationsLoaded[name].reset().fadeIn(0.5).play()
+              setCurrentAnimation(name)
+            }
+          }
+        },
+        npcRef
+      )
+      setActiveMovement(talkInteraction)
+    }
+  }
+
   if (!model) return null
 
   return (
@@ -244,11 +419,23 @@ export function User({ gender = 'men', character }) {
           <primitive object={new THREE.Object3D()} attach="target" />
         </spotLight>
       </group>
-      {modelRef.current?.currentAnimation && (
-        <Html position={[modelRef.current.position.x, modelRef.current.position.y + 2, modelRef.current.position.z]}>
-          <Dialog text={animationEmoticons[modelRef.current.currentAnimation]} />
+      {currentAnimation && (
+        <Html position={[modelRef.current?.position.x || 0, (modelRef.current?.position.y || 0) + 2, modelRef.current?.position.z || 0]}>
+          <Dialog text={animationEmoticons[currentAnimation]} />
+        </Html>
+      )}
+      {showRadialMenu && (
+        <Html>
+          <RadialMenu
+            onSelect={handleRadialSelect}
+            onClose={() => setShowRadialMenu(false)}
+            position={radialMenuPosition}
+            npcs={npcs}
+          />
         </Html>
       )}
     </>
   )
-}
+})
+
+User.displayName = 'User'
