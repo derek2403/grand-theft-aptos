@@ -106,7 +106,7 @@ export default function HeroSection() {
             transition={{ duration: 0.8, delay: 0.4 }}
             className="mt-14 flex flex-col items-center gap-0"
           >
-            <p className="text-xl text-gray-600 font-display">Built On</p>
+            <p className="text-xl text-gray-600 font-display">100% Built On</p>
             <div className="relative w-36 h-24">
               <Image
                 src="/partners/aptos.png"
