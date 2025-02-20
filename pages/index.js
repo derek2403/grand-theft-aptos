@@ -7,9 +7,11 @@ import { Environment } from '../components/Environment'
 import { CreateCharacterModal } from '../components/CreateCharacterModal'
 import { TimeSimulation } from '../utils/TimeSimulation'
 import { User } from '../components/User'
-import weatherConfigs from '../config/weather.json'
 import npcData from '../data/NPC.json'
 import { NPCController } from '../components/NPC'
+import { WeatherControls } from '../components/WeatherControls'
+import { Phil } from '@/components/Phil'
+import { FaUserPlus, FaRobot } from 'react-icons/fa'
 
 
 export default function Home() {
@@ -41,18 +43,6 @@ export default function Home() {
   useEffect(() => {
     setCharacters(npcData.characters)
   }, [])
-
-  // Get current config with fallback to day/night if specific time not found
-  const getCurrentConfig = () => {
-    const timeOfDay = timeState.timeOfDay
-    if (weatherConfigs[weather][timeOfDay]) {
-      return weatherConfigs[weather][timeOfDay]
-    }
-    // Fallback to day/night if specific time not found
-    return weatherConfigs[weather][timeOfDay === 'night' ? 'night' : 'day']
-  }
-
-  const currentConfig = getCurrentConfig()
 
   const handleCreateCharacter = async (formData) => {
     const newCharacter = {
@@ -110,22 +100,16 @@ export default function Home() {
       <Canvas
         shadows
         camera={{
-          position: [20, 200, 20],
+          position: [20, 20, 20],
           fov: 50,
           near: 0.1,
           far: 1000
         }}
       >
-        <color attach="background" args={['#87CEEB']} /> {/* Sunny sky blue */}
-        
         <Suspense fallback={null}>
-          <ambientLight intensity={1} />
-          <directionalLight
-            position={[10, 10, 5]}
-            intensity={1.5}
-            castShadow
-            shadow-mapSize-width={2048}
-            shadow-mapSize-height={2048}
+          <Environment 
+            weatherType={weather} 
+            timeState={timeState}
           />
           
           {characters.map(character => renderCharacter(character))}
@@ -136,8 +120,6 @@ export default function Home() {
               character={playerCharacter}
             />
           )}
-
-          <Environment weatherType="sunny" timeState={{ timeOfDay: 'day', dayProgress: 0.5 }} />
           
           <OrbitControls
             target={[0, 0, 0]}
@@ -154,25 +136,36 @@ export default function Home() {
           
           <EnvironmentMap preset="sunset" />
         </Suspense>
+          <Phil/>
       </Canvas>
 
-      <NPCController />
+      <WeatherControls
+        onWeatherChange={setWeather}
+        timeSimRef={timeSimRef}
+        currentWeather={weather}
+        currentTime={timeState.date}
+      />
 
-      {/* Top Bar Controls */}
-      <div className="absolute top-4 left-4 flex gap-4">
+      <NPCController />
+      
+
+      {/* Updated Top Bar Controls with vertical layout */}
+      <div className="absolute top-4 left-4 flex flex-col gap-2">
         {!playerCharacter && (
           <button
             onClick={() => setShowJoinModal(true)}
-            className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
+            className="bg-white text-black p-3 rounded-full hover:bg-gray-100 flex items-center gap-2 transition-colors duration-200 shadow-lg"
           >
-            Join Game
+            <FaUserPlus className="text-xl text-black" />
+            <span>Join Game</span>
           </button>
         )}
         <button
           onClick={() => setShowCreateModal(true)}
-          className="bg-green-500 text-white p-2 rounded hover:bg-green-600"
+          className="bg-white text-black p-3 rounded-full hover:bg-gray-100 flex items-center gap-2 transition-colors duration-200 shadow-lg"
         >
-          Create NPC
+          <FaRobot className="text-xl text-black" />
+          <span>Create NPC</span>
         </button>
       </div>
 

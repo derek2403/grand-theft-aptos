@@ -9,6 +9,7 @@ import { useWallet } from "@aptos-labs/wallet-adapter-react";
 import { transferCoins } from '../utils/coins';
 import { submitSponsoredNFTTransaction } from '../utils/nft';
 import { generateImage } from '../utils/dalle';
+import { ChatLog } from './ChatLog'
 
 const animationEmoticons = {
   Dancing: '💃',
@@ -181,6 +182,7 @@ export const User = forwardRef(({ character }, ref) => {
   const { signTransaction } = useWallet();
   const [nftCollectionCreated, setNftCollectionCreated] = useState(false);
   const [nftCollectionCount, setNftCollectionCount] = useState(0);
+  const chatLogRef = useRef(null)
 
   useEffect(() => {
     const loader = new FBXLoader()
@@ -372,13 +374,13 @@ export const User = forwardRef(({ character }, ref) => {
 
   // Handle radial menu selection
   const handleRadialSelect = async (action) => {
-    setShowRadialMenu(false);
+    setShowRadialMenu(false)
 
     if (action.type === 'talk') {
-      const targetNPC = action.target;
+      const targetNPC = action.target
       
       try {
-        setTransactionInProgress(true);
+        setTransactionInProgress(true)
         
         // Do coin transfer first
         const randomAmount = Math.floor(Math.random() * 50) + 1;
@@ -428,23 +430,31 @@ export const User = forwardRef(({ character }, ref) => {
             [HARDCODED_ACCOUNT.address]
           );
 
-          setChatLog(prev => [...prev, {
+          chatLogRef.current?.addMessage({
             character: character.name,
-            text: `transferred ${randomAmount} coins to ${targetNPC.name}`
-          }, {
+            text: `transferred ${randomAmount} coins to ${targetNPC.name}`,
+            action: action,
+            characterData: character,
+            targetCharacterData: targetNPC
+          })
+
+          chatLogRef.current?.addMessage({
             character: 'Leonardo da Vinci',
-            text: `Created unique collection and minted an NFT for you!`
-          }]);
+            text: `Created unique collection and minted an NFT for you!`,
+            action: action,
+            characterData: targetNPC,
+            targetCharacterData: character
+          })
         }
 
       } catch (error) {
-        console.error('Transaction failed:', error);
-        setChatLog(prev => [...prev, {
+        console.error('Transaction failed:', error)
+        chatLogRef.current?.addMessage({
           character: 'System',
           text: `Failed to complete transaction: ${error.message}`
-        }]);
+        })
       } finally {
-        setTransactionInProgress(false);
+        setTransactionInProgress(false)
       }
 
       // Create interaction using talkTo from character.js
@@ -514,6 +524,12 @@ export const User = forwardRef(({ character }, ref) => {
     }
   }
 
+  useEffect(() => {
+    // Initialize ChatLog
+    const chatLog = new ChatLog()
+    chatLogRef.current = chatLog
+  }, [])
+
   if (!model) return null
 
   return (
@@ -572,36 +588,8 @@ export const User = forwardRef(({ character }, ref) => {
           />
         </Html>
       )}
-      {/* Wallet status indicator */}
-      <Html>
-        <div className="fixed top-4 right-4">
-          <div className="bg-green-100 text-green-800 px-4 py-2 rounded-lg">
-            Using Account: {HARDCODED_ACCOUNT.address.slice(0, 6)}...{HARDCODED_ACCOUNT.address.slice(-4)}
-          </div>
-        </div>
-      </Html>
-
-      {/* Transaction progress indicator */}
-      {transactionInProgress && (
-        <Html>
-          <div className="fixed bottom-4 right-4 bg-blue-50 text-blue-600 px-4 py-2 rounded-lg shadow">
-            Transaction in progress...
-          </div>
-        </Html>
-      )}
-
-      {/* Chat log messages */}
-      {chatLog.length > 0 && (
-        <Html>
-          <div className="fixed left-4 bottom-4 max-w-md">
-            {chatLog.slice(-3).map((message, index) => (
-              <div key={index} className="bg-white/90 rounded-lg shadow-md p-2 mb-2">
-                <strong>{message.character}:</strong> {message.text}
-              </div>
-            ))}
-          </div>
-        </Html>
-      )}
+      {/* Render ChatLog component */}
+      {chatLogRef.current?.component}
     </>
   )
 })

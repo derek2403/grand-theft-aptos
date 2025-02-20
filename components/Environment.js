@@ -4,16 +4,40 @@ import { useState, useEffect, useRef } from 'react'
 
 import { Landscape } from './Landscape'
 import { Weather } from './Weather'
-import { TimeSimulation } from '../utils/TimeSimulation'
 
-export function Environment({ weatherType = 'sunny' }) {
-  const [timeState, setTimeState] = useState({
-    timeOfDay: 'day',
-    dayProgress: 0.5,
-    hours: 12
-  })
-  
-  const timeSimRef = useRef(new TimeSimulation(1000))
+// Weather configurations moved inline
+const weatherConfigs = {
+  sunny: {
+    sunrise: { skyColor: '#FF9A5C', ambientLight: 0.3, directionalLight: 0.5 },
+    day: { skyColor: '#4FA4E8', ambientLight: 1, directionalLight: 1 },
+    sunset: { skyColor: '#FF6B4A', ambientLight: 0.4, directionalLight: 0.6 },
+    dusk: { skyColor: '#2C1B4B', ambientLight: 0.2, directionalLight: 0.3 },
+    night: { skyColor: '#020409', ambientLight: 0.1, directionalLight: 0.1 } // 50% darker
+  },
+  cloudy: {
+    sunrise: { skyColor: '#E6B5A1', ambientLight: 0.2, directionalLight: 0.3 },
+    day: { skyColor: '#9EAFC2', ambientLight: 0.3, directionalLight: 0.5 },
+    sunset: { skyColor: '#B88A8E', ambientLight: 0.25, directionalLight: 0.4 },
+    dusk: { skyColor: '#4A4E69', ambientLight: 0.15, directionalLight: 0.2 },
+    night: { skyColor: '#060609', ambientLight: 0.05, directionalLight: 0.03 } // 50% darker
+  },
+  rain: {
+    sunrise: { skyColor: '#8B8589', ambientLight: 0.15, directionalLight: 0.2 },
+    day: { skyColor: '#5C6670', ambientLight: 0.2, directionalLight: 0.3 },
+    sunset: { skyColor: '#595761', ambientLight: 0.15, directionalLight: 0.25 },
+    dusk: { skyColor: '#363B45', ambientLight: 0.1, directionalLight: 0.15 },
+    night: { skyColor: '#050608', ambientLight: 0.03, directionalLight: 0.02 } // 50% darker
+  },
+  thunderstorm: {
+    sunrise: { skyColor: '#4A4A55', ambientLight: 0.1, directionalLight: 0.15 },
+    day: { skyColor: '#353B45', ambientLight: 0.1, directionalLight: 0.2 },
+    sunset: { skyColor: '#2A2D35', ambientLight: 0.08, directionalLight: 0.12 },
+    dusk: { skyColor: '#1C1E24', ambientLight: 0.05, directionalLight: 0.08 },
+    night: { skyColor: '#020203', ambientLight: 0.02, directionalLight: 0.01 } // 50% darker
+  }
+}
+
+export function Environment({ weatherType = 'sunny', timeState }) {
   const grassTexture = useTexture('/textures/grass.png')
 
   // Configure grass texture repeating
@@ -23,79 +47,58 @@ export function Environment({ weatherType = 'sunny' }) {
   const GROUND_SIZE = 200
   const GROUND_HEIGHT = -0.1
 
-  // Time-based lighting configurations
-  const lightingConfig = {
-    sunrise: {
-      skyColor: '#FF7F50',
-      ambientLight: 0.3,
-      directionalLight: 0.5,
-      fogColor: '#FFB6C1',
-      fogDensity: 0.02
-    },
-    day: {
-      skyColor: '#87CEEB',
-      ambientLight: 1,
-      directionalLight: 1,
-      fogColor: '#E6E6FA',
-      fogDensity: 0.01
-    },
-    sunset: {
-      skyColor: '#FF6347',
-      ambientLight: 0.4,
-      directionalLight: 0.6,
-      fogColor: '#DDA0DD',
-      fogDensity: 0.02
-    },
-    dusk: {
-      skyColor: '#4B0082',
-      ambientLight: 0.2,
-      directionalLight: 0.3,
-      fogColor: '#483D8B',
-      fogDensity: 0.03
-    },
-    night: {
-      skyColor: '#191970',
-      ambientLight: 0.1,
-      directionalLight: 0.1,
-      fogColor: '#000080',
-      fogDensity: 0.04
-    }
+  // Get time of day based on hours
+  const getTimeOfDay = (hours) => {
+    if (hours >= 5 && hours < 8) return 'sunrise'
+    if (hours >= 8 && hours < 16) return 'day'
+    if (hours >= 16 && hours < 19) return 'sunset'
+    if (hours >= 19 && hours < 21) return 'dusk'
+    return 'night'
   }
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const newTimeState = timeSimRef.current.update()
-      setTimeState(newTimeState)
-    }, 16.67) // ~60fps
+  // Get current config based on weather and time
+  const getCurrentConfig = () => {
+    const hours = timeState?.date ? new Date(timeState.date).getHours() : 12
+    const timeOfDay = getTimeOfDay(hours)
+    
+    if (weatherConfigs[weatherType]?.[timeOfDay]) {
+      return weatherConfigs[weatherType][timeOfDay]
+    }
+    return weatherConfigs[weatherType].day
+  }
 
-    return () => clearInterval(interval)
-  }, [])
-
-  const currentConfig = lightingConfig[timeState.timeOfDay]
+  const currentConfig = getCurrentConfig()
 
   return (
     <group position={[0, 0, 0]}>
-      {/* Sky */}
+      {/* Sky color from weather.json */}
       <color attach="background" args={[currentConfig.skyColor]} />
       
-      {/* Fog */}
-      <fog attach="fog" color={currentConfig.fogColor} density={currentConfig.fogDensity} />
+      {/* Scene Fog - color based on sky */}
+      <fog 
+        attach="fog" 
+        args={[
+          currentConfig.skyColor,
+          1,
+          weatherType === 'sunny' ? 200 : 100
+        ]} 
+      />
       
-      {/* Ambient Light */}
+      {/* Lights based on config */}
       <ambientLight intensity={currentConfig.ambientLight} />
-      
-      {/* Sun/Moon Directional Light */}
       <directionalLight
         position={[
-          Math.cos(timeState.dayProgress * Math.PI) * 100,
-          Math.sin(timeState.dayProgress * Math.PI) * 100,
+          Math.cos(timeState?.dayProgress * Math.PI || 0) * 100,
+          Math.sin(timeState?.dayProgress * Math.PI || 0) * 100,
           0
         ]}
         intensity={currentConfig.directionalLight}
         castShadow
+        shadow-mapSize-width={2048}
+        shadow-mapSize-height={2048}
       />
 
-      {/* Grass ground - explicitly mark as non-collider */}
+      {/* Ground */}
       <mesh 
         rotation={[-Math.PI / 2, 0, 0]} 
         position={[0, GROUND_HEIGHT, 0]} 
@@ -103,11 +106,15 @@ export function Environment({ weatherType = 'sunny' }) {
         userData={{ type: 'decoration' }}
       >
         <planeGeometry args={[GROUND_SIZE, GROUND_SIZE]} />
-        <meshStandardMaterial map={grassTexture} roughness={1} metalness={0} />
+        <meshStandardMaterial 
+          map={grassTexture} 
+          roughness={1} 
+          metalness={0}
+        />
       </mesh>
 
       <Landscape />
-      <Weather type={weatherType} timeOfDay={timeState.timeOfDay} />
+      <Weather type={weatherType} />
     </group>
   )
 } 

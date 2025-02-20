@@ -4,14 +4,6 @@ import { Suspense, useEffect, useState } from 'react'
 import { Environment } from './Environment'
 import { Boy } from './Boy'
 
-// Weather-specific sky colors
-const SKY_COLORS = {
-  sunny: '#87CEEB',    // Light blue
-  cloudy: '#C4C4C4',   // Gray
-  rain: '#4A4A4A',     // Dark gray
-  thunderstorm: '#2A2A2A'  // Very dark gray
-}
-
 const Scene = () => {
   const [weather, setWeather] = useState('sunny')
   const CAMERA_POSITION = [20, 20, 20] // Adjusted for isometric view
@@ -42,9 +34,6 @@ const Scene = () => {
       }}
       shadows
     >
-      {/* Dynamic sky color based on weather */}
-      <color attach="background" args={[SKY_COLORS[weather]]} />
-      
       <Suspense fallback={null}>
         <Environment weatherType={weather} />
         <Boy />

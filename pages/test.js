@@ -1,150 +1,110 @@
-import { Canvas } from '@react-three/fiber'
-import { OrbitControls } from '@react-three/drei'
-import { User } from '../components/User'
-import { useState, Suspense, useRef } from 'react'
-import { WalletSelector } from '../components/connectwallet/WalletSelector'
-import { useWallet } from "@aptos-labs/wallet-adapter-react"
+import { useWallet } from "@aptos-labs/wallet-adapter-react";
+import { News } from '../components/News';
+import { WeatherControls } from "@/components/WeatherControls";
+import { Canvas } from "@react-three/fiber";
+import { OrbitControls, Plane } from "@react-three/drei";
+import { Boy } from "@/components/Boy";
+import { Girl } from "@/components/Girl";
+import { Suspense } from "react";
+import { Phil } from '@/components/Phil'
 
 export default function TestPage() {
-  const [username, setUsername] = useState('')
-  const [gender, setGender] = useState('men')
-  const [isCreated, setIsCreated] = useState(false)
-  const { account } = useWallet()
-  const userRef = useRef()
+    const { account, connected } = useWallet();
 
-  const handleCreateUser = (e) => {
-    e.preventDefault()
-    if (!username.trim()) {
-      alert('Please enter a username')
-      return
-    }
-    if (!account?.address) {
-      alert('Please connect your wallet first')
-      return
-    }
-    setIsCreated(true)
-  }
+    const boyCharacter = {
+        name: "John",
+        position: [-2, 0, 0],
+        animations: {},
+    };
 
-  if (!isCreated) {
+    const girlCharacter = {
+        name: "Jane",
+        position: [2, 0, 0],
+        animations: {},
+    };
+
+    if (!connected) {
+        return (
+            <div className="min-h-screen bg-gray-100 p-8">
+                <div className="max-w-4xl mx-auto text-center">
+                    <h1 className="text-3xl font-bold mb-4">Please Connect Your Wallet</h1>
+                    <p className="text-gray-600">
+                        Use the wallet extension to connect and test the News component
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-900">
-        <div className="fixed top-4 right-4 z-50">
-          <WalletSelector />
+        <div className="min-h-screen bg-gray-100 p-8">
+            <div className="max-w-4xl mx-auto">
+                <h1 className="text-3xl font-bold text-center mb-8">
+                    Character Test Page
+                </h1>
+                
+                <div className="bg-white shadow rounded-lg p-6 mb-8">
+                    <h2 className="text-xl font-semibold mb-4">Connected Account</h2>
+                    <p className="font-mono break-all">{account.address}</p>
+                </div>
+
+                {/* 3D Scene */}
+                <div className="bg-white shadow rounded-lg overflow-hidden" style={{ height: "600px" }}>
+                    <Canvas
+                        shadows
+                        camera={{ position: [0, 5, 10], fov: 50 }}
+                    >
+                        <Suspense fallback={null}>
+                            {/* Lighting */}
+                            <ambientLight intensity={0.5} />
+                            <directionalLight
+                                position={[10, 10, 5]}
+                                intensity={1}
+                                castShadow
+                                shadow-mapSize-width={2048}
+                                shadow-mapSize-height={2048}
+                            />
+
+                            {/* White plane */}
+                            <Plane 
+                                receiveShadow 
+                                rotation={[-Math.PI / 2, 0, 0]} 
+                                position={[0, 0, 0]} 
+                                args={[20, 20]}
+                            >
+                                <meshStandardMaterial color="white" />
+                            </Plane>
+
+                            {/* Characters */}
+                            <Boy character={boyCharacter} />
+                            <Girl character={girlCharacter} />
+
+                            {/* Controls */}
+                            <OrbitControls 
+                                enablePan={true}
+                                enableZoom={true}
+                                enableRotate={true}
+                                minDistance={5}
+                                maxDistance={20}
+                                maxPolarAngle={Math.PI / 2 - 0.1}
+                            />
+
+                            <Phil />
+                        </Suspense>
+                    </Canvas>
+                </div>
+
+                <div className="bg-white shadow rounded-lg p-6 mt-8">
+                    <h2 className="text-xl font-semibold mb-4">Instructions</h2>
+                    <ul className="list-disc list-inside space-y-2">
+                        <li>Use mouse to orbit around the scene</li>
+                        <li>Scroll to zoom in/out</li>
+                        <li>Characters are positioned on a white plane</li>
+                    </ul>
+                </div>
+
+                <WeatherControls />
+            </div>
         </div>
-        <form 
-          onSubmit={handleCreateUser}
-          className="bg-gray-800 p-8 rounded-lg shadow-xl w-96"
-        >
-          <h2 className="text-2xl text-white mb-6 text-center">Create Your Character</h2>
-          
-          <div className="mb-4">
-            <label className="block text-white mb-2">Username</label>
-            <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className="w-full p-2 rounded bg-gray-700 text-white"
-              placeholder="Enter username"
-            />
-          </div>
-
-          <div className="mb-6">
-            <label className="block text-white mb-2">Gender</label>
-            <select
-              value={gender}
-              onChange={(e) => setGender(e.target.value)}
-              className="w-full p-2 rounded bg-gray-700 text-white"
-            >
-              <option value="men">Male</option>
-              <option value="women">Female</option>
-            </select>
-          </div>
-
-          <button
-            type="submit"
-            className="w-full p-2 rounded bg-blue-500 hover:bg-blue-600 text-white"
-          >
-            Create Character
-          </button>
-        </form>
-      </div>
-    )
-  }
-
-  return (
-    <div style={{ width: '100vw', height: '100vh' }}>
-      <div className="fixed top-4 right-4 z-50">
-        <WalletSelector />
-      </div>
-
-      <Canvas
-        camera={{ position: [0, 5, 10], fov: 60 }}
-        shadows
-      >
-        <ambientLight intensity={0.5} />
-        <directionalLight
-          position={[10, 10, 10]}
-          intensity={1}
-          castShadow
-        />
-        
-        {/* Ground plane */}
-        <mesh 
-          rotation={[-Math.PI / 2, 0, 0]} 
-          position={[0, 0, 0]}
-          receiveShadow
-        >
-          <planeGeometry args={[100, 100]} />
-          <meshStandardMaterial color="#303030" />
-        </mesh>
-
-        {/* User character */}
-        <Suspense fallback={null}>
-          <User 
-            ref={userRef}
-            character={{
-              name: username,
-              gender: gender
-            }}
-          />
-        </Suspense>
-
-        {/* Camera controls */}
-        <OrbitControls />
-      </Canvas>
-
-      {/* Instructions */}
-      <div style={{
-        position: 'absolute',
-        top: 20,
-        left: 20,
-        color: 'white',
-        backgroundColor: 'rgba(0,0,0,0.7)',
-        padding: '10px',
-        borderRadius: '5px'
-      }}>
-        Right-click anywhere to move the character
-      </div>
-
-      {/* Character Info with Wallet Address */}
-      <div style={{
-        position: 'absolute',
-        top: 20,
-        right: 20,
-        color: 'white',
-        backgroundColor: 'rgba(0,0,0,0.7)',
-        padding: '10px',
-        borderRadius: '5px',
-        marginTop: '60px'
-      }}>
-        <p>Username: {username}</p>
-        <p>Gender: {gender === 'men' ? 'Male' : 'Female'}</p>
-        <p className="truncate">
-          Wallet: {account?.address ? 
-            `${account.address.slice(0, 6)}...${account.address.slice(-4)}` : 
-            'Not connected'}
-        </p>
-      </div>
-    </div>
-  )
+    );
 } 
