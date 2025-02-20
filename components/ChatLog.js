@@ -18,14 +18,20 @@ export function ChatLogProvider({ children }) {
   const [unreadMessages, setUnreadMessages] = useState([])
 
   const addMessage = async (message) => {
-    if (!message) return
+    if (!message || message.character === 'System') return // Skip system messages
+    
+    // Format the message text to include actor for actions
+    let messageText = message.text
+    if (message.action) {
+      messageText = `${message.character} ${message.text}`
+    }
     
     // Format the message
     const formattedMessage = {
       id: message.id || Date.now(),
       timestamp: message.timestamp || new Date().toLocaleTimeString(),
-      character: message.character || message.speaker, // Support both formats
-      text: message.text,
+      character: message.character || message.speaker,
+      text: messageText,
       action: message.action,
       read: isOpen
     }
@@ -50,21 +56,23 @@ export function ChatLogProvider({ children }) {
           // Add AI-generated messages with a delay
           data.dialogue.forEach((dialogue, index) => {
             setTimeout(() => {
-              setMessages(prev => [...prev, {
-                id: Date.now() + index,
-                timestamp: new Date().toLocaleTimeString(),
-                character: dialogue.speaker,
-                text: dialogue.text,
-                read: isOpen
-              }])
-              if (!isOpen) {
-                setUnreadMessages(prev => [...prev, {
+              if (dialogue.speaker !== 'System') { // Skip system messages
+                setMessages(prev => [...prev, {
                   id: Date.now() + index,
                   timestamp: new Date().toLocaleTimeString(),
                   character: dialogue.speaker,
                   text: dialogue.text,
-                  read: false
+                  read: isOpen
                 }])
+                if (!isOpen) {
+                  setUnreadMessages(prev => [...prev, {
+                    id: Date.now() + index,
+                    timestamp: new Date().toLocaleTimeString(),
+                    character: dialogue.speaker,
+                    text: dialogue.text,
+                    read: false
+                  }])
+                }
               }
             }, index * 1000)
           })

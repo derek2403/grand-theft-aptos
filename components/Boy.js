@@ -23,7 +23,7 @@ function Dialog({ text }) {
   
   return (
     <div 
-      className="absolute bg-white px-3 py-1 rounded-lg shadow-md text-xl transform -translate-x-1/2 -translate-y-24"
+      className="absolute bg-white px-3 py-1 rounded-lg shadow-md text-xl transform -translate-x-1/2 -translate-y-24 z-[50]"
       style={{
         pointerEvents: 'none',
         whiteSpace: 'nowrap',

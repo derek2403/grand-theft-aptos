@@ -19,7 +19,7 @@ const INSPIRATIONAL_QUOTES = [
 function Dialog({ text }) {
   return (
     <div 
-      className="absolute bg-white px-3 py-1 rounded-lg shadow-md text-sm transform -translate-x-1/2 -translate-y-24"
+      className="absolute bg-white px-3 py-1 rounded-lg shadow-md text-sm transform -translate-x-1/2 -translate-y-24 z-[5]"
       style={{
         pointerEvents: 'none',
         whiteSpace: 'nowrap',
@@ -36,6 +36,7 @@ function Dialog({ text }) {
 // This is the inner component that uses R3F hooks
 function PhilModel() {
   const [model, setModel] = useState(null)
+  const [showDialog, setShowDialog] = useState(false)
   const [currentQuote, setCurrentQuote] = useState("")
   const [isMapLoaded, setIsMapLoaded] = useState(false)
   const modelRef = useRef()
@@ -44,6 +45,26 @@ function PhilModel() {
   const nameTagRef = useRef()
   const textureRef = useRef(null)
   const runAnimRef = useRef(null)
+
+  // Handle keypress
+  useEffect(() => {
+    const handleKeyPress = (event) => {
+      if (event.key.toLowerCase() === 'p') {
+        // Show random quote
+        const quote = INSPIRATIONAL_QUOTES[Math.floor(Math.random() * INSPIRATIONAL_QUOTES.length)]
+        setCurrentQuote(quote)
+        setShowDialog(true)
+        
+        // Hide after 2 seconds
+        setTimeout(() => {
+          setShowDialog(false)
+        }, 2000)
+      }
+    }
+
+    window.addEventListener('keypress', handleKeyPress)
+    return () => window.removeEventListener('keypress', handleKeyPress)
+  }, [])
 
   // First, check if map is loaded
   useEffect(() => {
@@ -111,23 +132,6 @@ function PhilModel() {
     })
   }, [isMapLoaded])
 
-  // Quote display logic - now always showing
-  useEffect(() => {
-    if (!isMapLoaded || !model) return;
-
-    const showNewQuote = () => {
-      const quote = INSPIRATIONAL_QUOTES[Math.floor(Math.random() * INSPIRATIONAL_QUOTES.length)]
-      setCurrentQuote(quote)
-    }
-
-    // Show initial quote
-    showNewQuote()
-    
-    // Change quote every 20 seconds
-    const interval = setInterval(showNewQuote, 20000)
-    return () => clearInterval(interval)
-  }, [isMapLoaded, model])
-
   useFrame((state, delta) => {
     if (mixerRef.current) {
       mixerRef.current.update(delta)
@@ -175,7 +179,7 @@ function PhilModel() {
           Phil
         </Text>
       </group>
-      {currentQuote && modelRef.current && (
+      {showDialog && currentQuote && modelRef.current && (
         <Html position={[modelRef.current.position.x, modelRef.current.position.y + 2, modelRef.current.position.z]}>
           <Dialog text={currentQuote} />
         </Html>

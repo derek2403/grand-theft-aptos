@@ -113,7 +113,7 @@ export function CreateCharacterModal({
     <Dialog
       open={showModal}
       onClose={onClose}
-      className="relative z-50"
+      className="relative z-[1000]"
     >
       <div className="fixed inset-0 bg-white/90" aria-hidden="true" />
       

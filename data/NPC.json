@@ -1,60 +1,100 @@
 {
-    "characters": [
-      {
-        "id": "npc1",
-        "name": "아이유(IU)",
-        "occupation": "K-pop artist and songwriter",
-        "mbti": "ENFJ",
-        "hobby": "music, performing arts, engaging with fans",
-        "gender": "female",
-        "characteristics": [
-          "charismatic",
-          "empathetic",
-          "creative",
-          "dedicated",
-          "inspiring"
-        ],
-        "goals": [
-          "to connect with fans through music",
-          "to create memorable performances",
-          "to continuously innovate in her artistry"
-        ],
-        "position": [-1.2477812720500059, 0, -2.7521226414512934],
-        "walletAddress": "0x6efb01899fcd73e335bf24178ddb82f8d400ae533f8c44790b067f0821c1d1ad",
-        "needs": {
-          "hunger": 80,
-          "energy": 80,
-          "social": 80,
-          "happiness": 80
-        }
-      },
-      {
-        "id": "npc2",
-        "name": "Leonardo da Vinci",
-        "occupation": "Painter",
-        "mbti": "INFJ",
-        "hobby": "Drawing",
-        "gender": "male",
-        "characteristics": [
-          "Creative",
-          "Artistic",
-          "Smart",
-          "Good Design Sense",
-          "Observant"
-        ],
-        "goals": [
-          "Become the best painter",
-          "Become the best painter",
-          "Become the best painter"
-        ],
-        "position": [3.6937152036618297, 0, 0.012720944189476668],
-        "walletAddress": "0xa10a8f9784a8d0100ebe6d5fe2db368ed830f58a6947fbd332491fcb0160ef18",
-        "needs": {
-          "hunger": 80,
-          "energy": 80,
-          "social": 80,
-          "happiness": 80
-        }
+  "characters": [
+    {
+      "id": "npc1",
+      "name": "아이유(IU)",
+      "occupation": "K-pop artist and songwriter",
+      "mbti": "ENFJ",
+      "hobby": "music, performing arts, engaging with fans",
+      "gender": "female",
+      "characteristics": [
+        "charismatic",
+        "empathetic",
+        "creative",
+        "dedicated",
+        "inspiring"
+      ],
+      "goals": [
+        "to connect with fans through music",
+        "to create memorable performances",
+        "to continuously innovate in her artistry"
+      ],
+      "position": [
+        -1.2477812720500059,
+        0,
+        -2.7521226414512934
+      ],
+      "walletAddress": "0x6efb01899fcd73e335bf24178ddb82f8d400ae533f8c44790b067f0821c1d1ad",
+      "needs": {
+        "hunger": 80,
+        "energy": 80,
+        "social": 80,
+        "happiness": 80
       }
-    ]
-  }
+    },
+    {
+      "id": "npc2",
+      "name": "Leonardo da Vinci",
+      "occupation": "Painter",
+      "mbti": "INFJ",
+      "hobby": "Drawing",
+      "gender": "male",
+      "characteristics": [
+        "Creative",
+        "Artistic",
+        "Smart",
+        "Good Design Sense",
+        "Observant"
+      ],
+      "goals": [
+        "Become the best painter",
+        "Become the best painter",
+        "Become the best painter"
+      ],
+      "position": [
+        3.6937152036618297,
+        0,
+        0.012720944189476668
+      ],
+      "walletAddress": "0xa10a8f9784a8d0100ebe6d5fe2db368ed830f58a6947fbd332491fcb0160ef18",
+      "needs": {
+        "hunger": 80,
+        "energy": 80,
+        "social": 80,
+        "happiness": 80
+      }
+    },
+    {
+      "name": "Elon Musk",
+      "occupation": "Entrepreneur and Public Figure focusing on Cryptocurrency and Economic Policy",
+      "mbti": "ENTJ",
+      "hobby": "Advocating for cryptocurrency, political commentary, engaging in public discourse",
+      "gender": "male",
+      "characteristics": [
+        "visionary",
+        "outspoken",
+        "strategic thinker",
+        "innovative",
+        "provocative"
+      ],
+      "goals": [
+        "promote cryptocurrency adoption",
+        "influence economic policy",
+        "reduce government spending"
+      ],
+      "needs": {
+        "hunger": 80,
+        "energy": 80,
+        "social": 80,
+        "happiness": 80
+      },
+      "walletAddress": "0x6efb01899fcd73e335bf24178ddb82f8d400ae533f8c44790b067f0821c1d1ad",
+      "id": 1740020061543,
+      "position": [
+        -0.25569365775797603,
+        0,
+        2.4441820775097733
+      ]
+    }
+  ]
+}
