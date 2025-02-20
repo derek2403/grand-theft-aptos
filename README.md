@@ -35,8 +35,8 @@ By merging **AI agents** and **Aptos** blockchain infrastructure, we’re able t
 2. **Blockchain-Powered Economy**  
    Aptos serves as the backbone of our in-game currency and asset ownership. It’s lightning-fast, ensuring seamless transactions, and robust enough to handle complex interactions between numerous AI agents and players.
 
-3. **On-Chain Randomness**  
-   Each in-game day, we apply on-chain randomization to redistribute or modify the in-game currency and events. This simulates real-world unpredictability, ensuring no two playthroughs feel the same.
+3. **Randomness API**  
+   Each in-game day, we apply Aptos randomization to redistribute or modify the in-game currency and events. This simulates real-world unpredictability, ensuring no two playthroughs feel the same.
 
 4. **Sponsored Transactions & Web2 Logins**  
    To reduce friction, we allow players to log in using Google or Apple accounts, and all gas fees are sponsored so that interacting with the blockchain happens seamlessly in the background.
