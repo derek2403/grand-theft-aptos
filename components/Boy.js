@@ -11,20 +11,27 @@ const animationEmoticons = {
   Sad: '😢',
   Singing: '🎵',
   Talking: '💭',
-  Arguing: '😠'
+  Arguing: '😠',
+  Stand: '',
+  Run: '🏃',
+  Left: '👈',
+  Right: '👉'
 }
 
 function Dialog({ text }) {
+  if (!text) return null;  // Don't render empty dialogs
+  
   return (
     <div 
       className="absolute bg-white px-3 py-1 rounded-lg shadow-md text-xl transform -translate-x-1/2 -translate-y-24"
       style={{
         pointerEvents: 'none',
-        whiteSpace: 'nowrap'
+        whiteSpace: 'nowrap',
+        border: '2px solid #4F46E5'
       }}
     >
       {text}
-      <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 rotate-45 w-3 h-3 bg-white" />
+      <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 rotate-45 w-3 h-3 bg-white border-r-2 border-b-2 border-indigo-600" />
     </div>
   )
 }

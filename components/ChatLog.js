@@ -63,8 +63,8 @@ const formatMessage = (message) => {
   // Determine message type
   let type = messageTypes.DIALOGUE
   if (message.action) type = messageTypes.ACTION
-  if (message.character === 'System') type = messageTypes.SYSTEM
   if (message.text.startsWith('*') && message.text.endsWith('*')) type = messageTypes.EMOTE
+  if (message.character === 'System') type = messageTypes.SYSTEM
 
   return {
     ...message,
@@ -84,15 +84,13 @@ export function ChatLog() {
 
   useEffect(() => {
     if (isOpen) {
-      // Mark all messages as read when chat is opened
       setMessages(prevMessages => 
         prevMessages.map(msg => ({ ...msg, read: true }))
-      );
-      setUnreadMessages([]);
+      )
+      setUnreadMessages([])
       chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
     } else {
-      // Update unread messages count
-      setUnreadMessages(messages.filter(msg => !msg.read));
+      setUnreadMessages(messages.filter(msg => !msg.read && msg.type !== 'system'))
     }
   }, [isOpen, messages])
 
@@ -103,7 +101,7 @@ export function ChatLog() {
       character: message.displayName || message.character,
       text: message.text,
       action: message.action,
-      read: false // New messages are unread by default
+      read: false
     })
 
     setMessages(prev => [...prev, formattedMessage])
@@ -140,8 +138,8 @@ export function ChatLog() {
   return {
     addMessage,
     clearMessages: () => {
-      setMessages([]);
-      setUnreadMessages([]);
+      setMessages([])
+      setUnreadMessages([])
     },
     component: (
       <div className="fixed bottom-4 left-4 z-[100]">
@@ -188,40 +186,40 @@ export function ChatLog() {
 
               {/* Messages */}
               <div className="max-h-[500px] overflow-y-auto p-4 space-y-3">
-                {messages.map(msg => (
-                  <motion.div
-                    key={msg.id}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    className={`rounded-lg p-3 ${
-                      msg.type === 'action' ? 'bg-blue-50 dark:bg-blue-900/10' :
-                      msg.type === 'system' ? 'bg-gray-50 dark:bg-gray-800/50' :
-                      msg.type === 'emote' ? 'bg-purple-50 dark:bg-purple-900/10' :
-                      'bg-white dark:bg-gray-800'
-                    } ${!msg.read ? 'border-l-4 border-blue-500' : ''}`}
-                  >
-                    <div className="flex items-start justify-between mb-1">
-                      <div className="flex items-center gap-2 min-w-[150px] max-w-[150px]">
-                        <span className={`font-medium text-sm truncate ${
-                          msg.type === 'system' ? 'text-gray-500 dark:text-gray-400' :
-                          msg.type === 'action' ? 'text-blue-600 dark:text-blue-400' :
-                          'text-gray-900 dark:text-gray-100'
-                        }`}>
-                          {msg.character}
+                {messages
+                  .filter(msg => msg.type !== 'system')
+                  .map(msg => (
+                    <motion.div
+                      key={msg.id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      className={`rounded-lg p-3 ${
+                        msg.type === 'action' ? 'bg-blue-50 dark:bg-blue-900/10' :
+                        msg.type === 'emote' ? 'bg-purple-50 dark:bg-purple-900/10' :
+                        'bg-white dark:bg-gray-800'
+                      } ${!msg.read ? 'border-l-4 border-blue-500' : ''}`}
+                    >
+                      <div className="flex items-start justify-between mb-1">
+                        <div className="flex items-center gap-2 min-w-[150px] max-w-[150px]">
+                          <span className={`font-medium text-sm truncate ${
+                            msg.type === 'action' ? 'text-blue-600 dark:text-blue-400' :
+                            'text-gray-900 dark:text-gray-100'
+                          }`}>
+                            {msg.character}
+                          </span>
+                          {!msg.read && (
+                            <span className="inline-block w-2 h-2 shrink-0 bg-blue-500 rounded-full" />
+                          )}
+                        </div>
+                        <span className="text-xs text-gray-500 dark:text-gray-400 shrink-0">
+                          {msg.timestamp}
                         </span>
-                        {!msg.read && (
-                          <span className="inline-block w-2 h-2 shrink-0 bg-blue-500 rounded-full" />
-                        )}
                       </div>
-                      <span className="text-xs text-gray-500 dark:text-gray-400 shrink-0">
-                        {msg.timestamp}
-                      </span>
-                    </div>
-                    <p className="text-sm text-gray-700 dark:text-gray-300 break-words">
-                      {msg.formattedText}
-                    </p>
-                  </motion.div>
-                ))}
+                      <p className="text-sm text-gray-700 dark:text-gray-300 break-words">
+                        {msg.formattedText}
+                      </p>
+                    </motion.div>
+                  ))}
                 <div ref={chatEndRef} />
               </div>
 

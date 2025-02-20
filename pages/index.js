@@ -98,78 +98,6 @@ export default function Home() {
   }
 
   return (
-    <div className="w-full h-screen relative">
-      <Canvas
-        shadows
-        camera={{
-          position: [20, 20, 20],
-          fov: 50,
-          near: 0.1,
-          far: 1000
-        }}
-      >
-        <Suspense fallback={null}>
-          <Environment 
-            weatherType={weather} 
-            timeState={timeState}
-          />
-          
-          {characters.map(character => renderCharacter(character))}
-
-          {playerCharacter && (
-            <User 
-              ref={userRef}
-              character={playerCharacter}
-            />
-          )}
-          
-          <OrbitControls
-            target={[0, 0, 0]}
-            maxPolarAngle={Math.PI / 2.5}
-            minPolarAngle={Math.PI / 3}
-            maxAzimuthAngle={Math.PI / 2}
-            minAzimuthAngle={-Math.PI / 2}
-            enableZoom={true}
-            enablePan={true}
-            zoomSpeed={0.5}
-            minDistance={10}
-            maxDistance={50}
-          />
-          
-          <EnvironmentMap preset="sunset" />
-        </Suspense>
-          <Phil/>
-      </Canvas>
-
-      <WeatherControls
-        onWeatherChange={setWeather}
-        timeSimRef={timeSimRef}
-        currentWeather={weather}
-        currentTime={timeState.date}
-      />
-
-      <NPCController />
-      
-
-      {/* Updated Top Bar Controls with vertical layout */}
-      <div className="absolute top-4 left-4 flex flex-col gap-2">
-        {!playerCharacter && (
-          <button
-            onClick={() => setShowJoinModal(true)}
-            className="bg-white text-black p-3 rounded-full hover:bg-gray-100 flex items-center gap-2 transition-colors duration-200 shadow-lg"
-          >
-            <FaUserPlus className="text-xl text-black" />
-            <span>Join Game</span>
-          </button>
-        )}
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="bg-white text-black p-3 rounded-full hover:bg-gray-100 flex items-center gap-2 transition-colors duration-200 shadow-lg"
-        >
-          <FaRobot className="text-xl text-black" />
-          <span>Create NPC</span>
-        </button>
-      </div>
     <>
       <Head>
         <title>Models</title>
@@ -180,22 +108,16 @@ export default function Home() {
         <Canvas
           shadows
           camera={{
-            position: [20, 200, 20],
+            position: [20, 20, 20],
             fov: 50,
             near: 0.1,
             far: 1000
           }}
         >
-          <color attach="background" args={['#87CEEB']} /> {/* Sunny sky blue */}
-          
           <Suspense fallback={null}>
-            <ambientLight intensity={1} />
-            <directionalLight
-              position={[10, 10, 5]}
-              intensity={1.5}
-              castShadow
-              shadow-mapSize-width={2048}
-              shadow-mapSize-height={2048}
+            <Environment 
+              weatherType={weather} 
+              timeState={timeState}
             />
             
             {characters.map(character => renderCharacter(character))}
@@ -206,11 +128,6 @@ export default function Home() {
                 character={playerCharacter}
               />
             )}
-
-            <Environment 
-              weatherType={weather} 
-              timeState={timeState} 
-            />
             
             <OrbitControls
               target={[0, 0, 0]}
@@ -227,9 +144,9 @@ export default function Home() {
             
             <EnvironmentMap preset="sunset" />
           </Suspense>
+          <Phil/>
         </Canvas>
 
-        {/* Weather Controls */}
         <WeatherControls
           onWeatherChange={setWeather}
           timeSimRef={timeSimRef}
@@ -239,21 +156,23 @@ export default function Home() {
 
         <NPCController />
 
-        {/* Top Bar Controls */}
-        <div className="absolute top-4 left-4 flex gap-4">
+        {/* Updated Top Bar Controls with vertical layout */}
+        <div className="absolute top-4 left-4 flex flex-col gap-2">
           {!playerCharacter && (
             <button
               onClick={() => setShowJoinModal(true)}
-              className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
+              className="bg-white text-black p-3 rounded-full hover:bg-gray-100 flex items-center gap-2 transition-colors duration-200 shadow-lg"
             >
-              Join Game
+              <FaUserPlus className="text-xl text-black" />
+              <span>Join Game</span>
             </button>
           )}
           <button
             onClick={() => setShowCreateModal(true)}
-            className="bg-green-500 text-white p-2 rounded hover:bg-green-600"
+            className="bg-white text-black p-3 rounded-full hover:bg-gray-100 flex items-center gap-2 transition-colors duration-200 shadow-lg"
           >
-            Create NPC
+            <FaRobot className="text-xl text-black" />
+            <span>Create NPC</span>
           </button>
         </div>
 

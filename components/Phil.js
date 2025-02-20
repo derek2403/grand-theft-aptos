@@ -9,8 +9,11 @@ import mapData from '../data/map.json'
 const INSPIRATIONAL_QUOTES = [
   "Join my hackathon! 🚀",
   "There's a unicorn within all of you! 🦄",
-  "Who wants to disrupt the industry? 💡",
   "Think outside the box! 📦",
+  "MVP by Monday! 💪",
+  "Who needs sleep when you have coffee? ☕",
+  "Fail fast, succeed faster! 🎯",
+  "It's not a bug, it's a feature! 🐛",
 ]
 
 function Dialog({ text }) {
@@ -34,7 +37,6 @@ function Dialog({ text }) {
 function PhilModel() {
   const [model, setModel] = useState(null)
   const [currentQuote, setCurrentQuote] = useState("")
-  const [showQuote, setShowQuote] = useState(false)
   const [isMapLoaded, setIsMapLoaded] = useState(false)
   const modelRef = useRef()
   const mixerRef = useRef()
@@ -109,21 +111,19 @@ function PhilModel() {
     })
   }, [isMapLoaded])
 
-  // Quote display logic
+  // Quote display logic - now always showing
   useEffect(() => {
     if (!isMapLoaded || !model) return;
 
     const showNewQuote = () => {
       const quote = INSPIRATIONAL_QUOTES[Math.floor(Math.random() * INSPIRATIONAL_QUOTES.length)]
       setCurrentQuote(quote)
-      setShowQuote(true)
-      
-      setTimeout(() => {
-        setShowQuote(false)
-      }, 10000)
     }
 
+    // Show initial quote
     showNewQuote()
+    
+    // Change quote every 20 seconds
     const interval = setInterval(showNewQuote, 20000)
     return () => clearInterval(interval)
   }, [isMapLoaded, model])
@@ -137,10 +137,13 @@ function PhilModel() {
       wanderRef.current.update(modelRef.current, delta)
     }
 
-    // Update nametag position to follow model's head
+    // Update nametag position and rotation to follow model and face camera
     if (modelRef.current && nameTagRef.current) {
       nameTagRef.current.position.x = modelRef.current.position.x
       nameTagRef.current.position.z = modelRef.current.position.z
+      
+      // Make the text face the camera
+      nameTagRef.current.quaternion.copy(state.camera.quaternion)
     }
   })
 
@@ -166,11 +169,13 @@ function PhilModel() {
           outlineColor="#4F46E5"
           renderOrder={1}
           depthOffset={-1}
+          // Add billboard mode to always face camera
+          userData={{ enableBillboard: true }}
         >
           Phil
         </Text>
       </group>
-      {showQuote && modelRef.current && (
+      {currentQuote && modelRef.current && (
         <Html position={[modelRef.current.position.x, modelRef.current.position.y + 2, modelRef.current.position.z]}>
           <Dialog text={currentQuote} />
         </Html>
