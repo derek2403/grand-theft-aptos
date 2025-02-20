@@ -78,11 +78,7 @@ By merging **AI agents** and **Aptos** blockchain infrastructure, we’re able t
 
 ---
 
-## Architecture & Tech Stack
-
-![Agents](#)
-
-### Tech Stack Overview
+## Tech Stack Overview
 
 - **Blender**  
   Used for building and rendering our 3D open-world environment, providing immersive visuals and real-time interaction.
@@ -103,14 +99,6 @@ By merging **AI agents** and **Aptos** blockchain infrastructure, we’re able t
 
 - **Aptos Blockchain**  
   Deployed Move-based smart contracts that facilitate in-game transactions, NFT minting, and random event triggers. Its speed and security enable frictionless on-chain actions.
-
----
-
-### Architectural Diagram
-
-![Architectural Diagram](#)
-
-*(A high-level illustration showcasing the interaction between the user interface, AI agent generation, Aptos blockchain for transactions, and on-chain random events.)*
 
 ---
 
