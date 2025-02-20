@@ -9,7 +9,7 @@ import { useWallet } from "@aptos-labs/wallet-adapter-react";
 import { transferCoins } from '../utils/coins';
 import { submitSponsoredNFTTransaction } from '../utils/nft';
 import { generateImage } from '../utils/dalle';
-import { ChatLog } from './ChatLog'
+import { useChatLog } from './ChatLog'
 
 const animationEmoticons = {
   Dancing: '💃',
@@ -178,11 +178,10 @@ export const User = forwardRef(({ character }, ref) => {
   const [connected, setConnected] = useState(false)
   const [account, setAccount] = useState(null)
   const [transactionInProgress, setTransactionInProgress] = useState(false)
-  const [chatLog, setChatLog] = useState([])
+  const { addMessage } = useChatLog()
   const { signTransaction } = useWallet();
   const [nftCollectionCreated, setNftCollectionCreated] = useState(false);
   const [nftCollectionCount, setNftCollectionCount] = useState(0);
-  const chatLogRef = useRef(null)
 
   useEffect(() => {
     const loader = new FBXLoader()
@@ -407,7 +406,7 @@ export const User = forwardRef(({ character }, ref) => {
           // Generate image using DALL-E
           const prompt = "A Renaissance-style portrait in the style of Leonardo da Vinci";
           const imageUrl = await generateImage(prompt);
-          console.log('Generated DALL-E image URL:', imageUrl);
+          console.log('Generated image URL:', imageUrl);
 
           // Create collection with unique name
           await submitSponsoredNFTTransaction(
@@ -430,28 +429,25 @@ export const User = forwardRef(({ character }, ref) => {
             [HARDCODED_ACCOUNT.address]
           );
 
-          chatLogRef.current?.addMessage({
+          addMessage({
             character: character.name,
             text: `transferred ${randomAmount} coins to ${targetNPC.name}`,
-            action: action,
-            characterData: character,
-            targetCharacterData: targetNPC
+            action: true
           })
 
-          chatLogRef.current?.addMessage({
+          addMessage({
             character: 'Leonardo da Vinci',
             text: `Created unique collection and minted an NFT for you!`,
-            action: action,
-            characterData: targetNPC,
-            targetCharacterData: character
+            action: true
           })
         }
 
       } catch (error) {
         console.error('Transaction failed:', error)
-        chatLogRef.current?.addMessage({
+        addMessage({
           character: 'System',
-          text: `Failed to complete transaction: ${error.message}`
+          text: `Failed to complete transaction: ${error.message}`,
+          action: true
         })
       } finally {
         setTransactionInProgress(false)
@@ -521,14 +517,14 @@ export const User = forwardRef(({ character }, ref) => {
         animationsLoaded[action.name].reset().fadeIn(0.5).play()
         setCurrentAnimation(action.name)
       }
+
+      addMessage({
+        character: character.name,
+        text: `is ${action.name.toLowerCase()}`,
+        action: true
+      })
     }
   }
-
-  useEffect(() => {
-    // Initialize ChatLog
-    const chatLog = new ChatLog()
-    chatLogRef.current = chatLog
-  }, [])
 
   if (!model) return null
 
@@ -588,8 +584,6 @@ export const User = forwardRef(({ character }, ref) => {
           />
         </Html>
       )}
-      {/* Render ChatLog component */}
-      {chatLogRef.current?.component}
     </>
   )
 })

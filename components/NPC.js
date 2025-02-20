@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { checkPosition, getCheckpoints, goto, playAnimation, wanderAround, talkTo } from '../utils/character'
 import NPCData from '../data/NPC.json'
-import { ChatLog } from './ChatLog'
+import { useChatLog } from './ChatLog'
 import { generateCharacterActions } from '../services/openai'
 import * as THREE from 'three'
 
@@ -12,7 +12,7 @@ export function NPCController() {
   const [isExecuting, setIsExecuting] = useState(false)
   const [showDoneMessage, setShowDoneMessage] = useState(false)
   const [isAutoRunning, setIsAutoRunning] = useState(true)
-  const chatLog = ChatLog()
+  const { addMessage } = useChatLog()
 
   const animations = [
     'Dancing',
@@ -69,7 +69,7 @@ export function NPCController() {
   // Add toggle button for auto-run
   const toggleAutoRun = () => {
     setIsAutoRunning(prev => !prev)
-    chatLog.addMessage({
+    addMessage({
       character: 'System',
       text: `Auto-run ${!isAutoRunning ? 'started' : 'stopped'}`
     })
@@ -187,7 +187,7 @@ export function NPCController() {
       switch (action.type) {
         case 'goto':
           messageData.text = `is going to ${action.checkpoint}`
-          chatLog.addMessage(messageData)
+          addMessage(messageData)
           
           if (character.ref?.current) {
             const movement = goto(character.name, action.checkpoint, {
@@ -221,7 +221,7 @@ export function NPCController() {
 
         case 'animation':
           messageData.text = `is ${action.animation.toLowerCase()}`
-          chatLog.addMessage(messageData)
+          addMessage(messageData)
 
           if (character.ref?.current && character.animations?.[action.animation]) {
             // Stop any current animation
@@ -260,7 +260,7 @@ export function NPCController() {
             characteristics: targetChar.characteristics,
             gender: targetChar.gender
           }
-          chatLog.addMessage(messageData)
+          addMessage(messageData)
 
           if (character.ref?.current && targetChar.ref?.current) {
             const interaction = talkTo(
@@ -309,7 +309,7 @@ export function NPCController() {
 
         case 'wander':
           messageData.text = 'is wandering around'
-          chatLog.addMessage(messageData)
+          addMessage(messageData)
 
           if (character.ref?.current) {
             const movement = wanderAround(
@@ -408,7 +408,7 @@ export function NPCController() {
               animation: randomAnimation
             }
             
-            chatLog.addMessage({
+            addMessage({
               character: 'System',
               text: `Resolved talk conflict: Changed action to ${randomAnimation}`
             })
@@ -417,13 +417,13 @@ export function NPCController() {
       })
 
       setCharacterQueues(newQueues)
-      chatLog.addMessage({
+      addMessage({
         character: 'System',
         text: 'Actions generated for all characters. Press Execute All to start.'
       })
     } catch (error) {
       console.error('Error generating actions:', error)
-      chatLog.addMessage({
+      addMessage({
         character: 'System',
         text: 'Error generating actions. Please try again.'
       })
@@ -451,6 +451,11 @@ export function NPCController() {
     const direction = new THREE.Vector3()
     direction.subVectors(interaction.partner.position, npc.ref.current.position)
     npc.ref.current.rotation.y = Math.atan2(direction.x, direction.z)
+
+    addMessage({
+      character: 'System',
+      text: `${npc.name} started talking with ${interaction.partner.name}`
+    })
   }
 
   // Expose the controller methods
@@ -466,5 +471,5 @@ export function NPCController() {
     }
   }, [characters])
 
-  return chatLog.component
+  return null
 } 

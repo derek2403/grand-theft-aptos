@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useWallet } from "@aptos-labs/wallet-adapter-react";
 import { Aptos, AptosConfig, Network, Account } from "@aptos-labs/ts-sdk";
 import Image from 'next/image';
@@ -9,7 +9,7 @@ const SPONSOR_ADDRESS = "0x7bda16775910109bd87aef69fcb4cdeb8c3defbfd51332fd02525
 const aptosConfig = new AptosConfig({ network: Network.TESTNET });
 const aptos = new Aptos(aptosConfig);
 
-export function News() {
+export function News({ onClose, autoGenerate = false }) {
     const { account, connected, signTransaction } = useWallet();
     const [headlines, setHeadlines] = useState([]);
     const [isGenerating, setIsGenerating] = useState(false);
@@ -153,7 +153,6 @@ export function News() {
             });
 
             const newsItems = (await Promise.all(newsPromises)).filter(Boolean);
-            // Add new items to the end and maintain only 4 items
             setHeadlines(prev => [...prev, ...newsItems].slice(-4));
 
         } catch (error) {
@@ -162,6 +161,13 @@ export function News() {
             setIsGenerating(false);
         }
     };
+
+    // Auto-generate news when mounted if autoGenerate is true
+    useEffect(() => {
+        if (autoGenerate && connected && headlines.length === 0) {
+            generateNews();
+        }
+    }, [autoGenerate, connected]);
 
     const formatAddress = (address) => {
         if (!address) return "";
@@ -179,13 +185,21 @@ export function News() {
                     </div>
                     <h2 className="text-xl font-bold">GTA News Network</h2>
                 </div>
-                <button
-                    onClick={generateNews}
-                    disabled={isGenerating}
-                    className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50 font-medium"
-                >
-                    {isGenerating ? "Generating..." : "Breaking News"}
-                </button>
+                <div className="flex gap-2">
+                    <button
+                        onClick={generateNews}
+                        disabled={isGenerating}
+                        className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50 font-medium"
+                    >
+                        {isGenerating ? "Generating..." : "Breaking News"}
+                    </button>
+                    <button
+                        onClick={onClose}
+                        className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 font-medium"
+                    >
+                        Close
+                    </button>
+                </div>
             </div>
             
             <div className="flex justify-between gap-4">

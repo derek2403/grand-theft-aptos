@@ -5,6 +5,7 @@ import { AutoConnectProvider } from "../components/connectwallet/AutoConnectProv
 import { WalletSelector } from "../components/connectwallet/WalletSelector";
 import { Inter } from "next/font/google";
 import Head from 'next/head'
+import { ChatLogProvider } from '../components/ChatLog'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -22,7 +23,9 @@ function MyApp({ Component, pageProps }) {
             <div className="fixed top-4 right-4 z-50">
               <WalletSelector />
             </div>
-            <Component {...pageProps} />
+            <ChatLogProvider>
+              <Component {...pageProps} />
+            </ChatLogProvider>
           </WalletProvider>
         </AutoConnectProvider>
       </ThemeProvider>
