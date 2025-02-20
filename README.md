@@ -139,5 +139,8 @@ By merging **AI agents** and **Aptos** blockchain infrastructure, we’re able t
    Grow the game world into a vast, ever-expanding environment, with new cities, biomes, and interactive zones unlocking over time. This allows for more exploration, player-driven economies, and emergent gameplay.
 
 ---
+## Screenshot
+
+---
 
 *Thank you for checking out Grand Theft Aptos! Feel free to contribute, open issues, or provide feedback. We’re excited to keep expanding this project and shaping the future of AI-driven, blockchain-powered gaming.*
