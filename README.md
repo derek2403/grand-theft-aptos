@@ -117,10 +117,10 @@ By merging **AI agents** and **Aptos** blockchain infrastructure, we’re able t
 ## How We Use Aptos
 
 1. **In-Game Currency**  
-   The game’s economy is powered by Aptos smart contracts, ensuring secure and seamless transactions. The smart contract for the in-game currency can be found at `/coins`.
+   The game’s economy is powered by Aptos smart contracts, ensuring secure and seamless transactions. The smart contract for the in-game currency can be found at `/coins`. The link to the smart contract: https://explorer.aptoslabs.com/object/0x42cbb5d8dada99304869c2466fb0f90c40b55f323554438acd540fc397976704/modules/packages/coins4?network=testnet. 
 
 2. **NFT Minting**  
-   All in-game assets and NFTs are minted on the Aptos blockchain, enabling true ownership and verifiable scarcity. The smart contract for NFTs is located at `/nft`.
+   All in-game assets and NFTs are minted on the Aptos blockchain, enabling true ownership and verifiable scarcity. The smart contract for NFTs is located at `/nft`. The link to the smart contract: https://explorer.aptoslabs.com/object/0xc18ba9c71683d205b0d0ff908dd9b4c0b9c992c9c9532e74f26e71d2604e835f/modules/packages/nft5?network=testnet.
 
 3. **On-Chain Randomness**  
    We leverage Aptos’s built-in randomization functions to simulate real-world economic fluctuations—some NPCs gain wealth while others lose it, adding constant unpredictability.
