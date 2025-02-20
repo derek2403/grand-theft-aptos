@@ -24,7 +24,7 @@ export default function BuiltOn() {
           className="text-center flex flex-col items-center justify-center min-h-[200px]"
         >
           <div className="flex flex-col items-center gap-8">
-            <h2 className="text-4xl font-medium text-gray-700 font-display tracking-wide">Built On</h2>
+            <h2 className="text-4xl font-medium text-gray-700 font-display tracking-wide">Fully Built On</h2>
             <div className="relative w-48 h-12">
               <Image
                 src="/partners/aptos.png"

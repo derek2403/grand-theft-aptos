@@ -1,101 +1,185 @@
-# Grand Theft Aptos - Hackathon Landing Page
+# Implementing Particles Effect in Homepage
 
 ## Overview
-Grand Theft Aptos (GTA) is a groundbreaking 3D open-world game that revolutionizes gaming by replacing traditional NPCs with autonomous AI agents. Built on the Aptos blockchain, it creates a persistent, evolving world where every interaction is meaningful and every character has its own story. This innovative project combines cutting-edge AI technology with blockchain mechanics to deliver an unprecedented gaming experience.
+The particles effect creates an animated background with floating dots that interact with mouse movement, adding a dynamic visual element to your webpage. This implementation is based on the magicui components system and uses HTML5 Canvas for optimal performance.
 
-## Core Features
-- **Autonomous AI Agents**: Each character in the game is powered by advanced AI, making independent decisions based on their goals, personality, and environment.
-- **Dynamic World System**: The game world evolves based on AI agent interactions and player actions, creating unique storylines and emergent gameplay.
-- **Blockchain Integration**: 
-  - Secure ownership of in-game assets
-  - Transparent transaction system
-  - Player-driven economy
-  - Verifiable game states
-- **Next-Gen Graphics**: Powered by Unreal Engine 5 with ray tracing and dynamic lighting.
-- **Persistent World**: Actions have lasting consequences, shaping the game world over time.
+## Prerequisites
+- Next.js project with Tailwind CSS
+- React 18 or higher
+- A modern browser that supports Canvas API
+- Basic understanding of React hooks and Canvas
 
-## Landing Page Sections
+## Step 1: Create the Mouse Position Hook
 
-### 1. Hero Section
-- **Dynamic Background**: Parallax scrolling cityscape with AI agents in action
-- **Title**: "Grand Theft Aptos"
-- **Subtitle**: "Where AI Meets Chaos"
-- **Tagline**: "The first truly living open world"
-- **CTA Button**: "Enter the Revolution" 
-- **Logo**: Premium 3D animated logo at `/public/logo.png`
+First, create a custom hook for tracking mouse position in the `Particles.js` file:
 
-### 2. Features Showcase
-- **AI Showcase**: Interactive demo showing AI decision-making
-- **Blockchain Elements**: Visual representation of the tokenomics
-- **World Dynamics**: Time-lapse of the evolving game world
-- **Technology Stack**: Visual breakdown of key technologies
+```javascript
+import { useEffect, useState } from "react";
 
-### 3. Gameplay Experience
-- **Interactive Demo**: Live WebGL demo of basic gameplay
-- **Video Highlights**: Curated gameplay moments
-- **Feature Breakdown**: 
-  - AI Agent System
-  - Combat Mechanics
-  - Economy System
-  - Mission Structure
+function useMousePosition() {
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
-### 4. Technical Innovation
-- **AI Architecture**: Explanation of the agent system
-- **Blockchain Integration**: 
-  - Smart Contract Overview
-  - Asset Management
-  - Transaction System
-- **Performance Optimizations**
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const handleMouseMove = (event) => {
+        setMousePosition({ x: event.clientX, y: event.clientY });
+      };
+      window.addEventListener("mousemove", handleMouseMove);
+      return () => window.removeEventListener("mousemove", handleMouseMove);
+    }
+  }, []);
 
-### 5. Community Hub
-- **Discord Integration**: Live member count
-- **Twitter Feed**: Latest updates
-- **Development Blog**: Weekly progress
-- **Community Events Calendar**
+  return mousePosition;
+}
+```
 
-### 6. Team & Partners
-- **Core Team**: Interactive cards with roles and backgrounds
-- **Advisors**: Industry experts supporting the project
-- **Technology Partners**: Collaboration showcase
-- **Hackathon Details**: Competition context and goals
+## Step 2: Create a Helper Function to Convert Hex Colors to RGB
 
-### 7. Interactive Elements
-- **Real-time Statistics**: Player count, transactions, active agents
-- **Community Achievements**: Milestones and records
-- **Resource Links**: Documentation, GitHub, whitepaper
+```javascript
+function hexToRgb(hex) {
+  hex = hex.replace("#", "");
+  const bigint = parseInt(hex, 16);
+  const r = (bigint >> 16) & 255;
+  const g = (bigint >> 8) & 255;
+  const b = bigint & 255;
+  return [r, g, b];
+}
+```
 
-### 8. Footer
-- **Social Links**: All platform connections
-- **Legal Information**: Terms, privacy policy
-- **Contact Options**: Multiple channels for support
+## Step 3: Create the Particles Component
 
-## Technical Implementation
-- **Framework**: Next.js 13 with App Router
-- **State Management**: Redux Toolkit for complex state
-- **Styling**: 
-  - Tailwind CSS for rapid development
-  - CSS Modules for component-specific styles
-  - Custom design system
-- **Animation**: 
-  - Framer Motion for micro-interactions
-  - Three.js for 3D elements
-  - GSAP for complex animations
-- **Performance**: 
-  - Dynamic imports
-  - Image optimization
-  - Code splitting
-  - Progressive loading
-- **Analytics**: 
-  - User behavior tracking
-  - Performance monitoring
-  - Conversion optimization
+Create `Particles.js` inside `components/magicui/` and add the following implementation:
 
-## Development Priorities
-1. Core functionality and smooth user experience
-2. Responsive design across all devices
-3. Performance optimization
-4. Security measures
-5. Analytics implementation
+```javascript
+import React, { useEffect, useRef, useState } from "react";
+import useMousePosition from "../hooks/useMousePosition";
 
-This enhanced landing page structure provides a more comprehensive and engaging presentation of Grand Theft Aptos, with clear technical specifications and implementation guidelines.
+const Particles = ({ className = "", quantity = 125, ease = 50, color = "#ffffff" }) => {
+  const canvasRef = useRef(null);
+  const context = useRef(null);
+  const mousePosition = useMousePosition();
+  const [dpr, setDpr] = useState(1);
+  const particles = useRef([]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setDpr(window.devicePixelRatio || 1);
+      const canvas = canvasRef.current;
+      if (canvas) {
+        context.current = canvas.getContext("2d");
+      }
+      initCanvas();
+      createParticles();
+      animate();
+      window.addEventListener("resize", initCanvas);
+      return () => window.removeEventListener("resize", initCanvas);
+    }
+  }, [color]);
+
+  const initCanvas = () => {
+    if (canvasRef.current && context.current && typeof window !== "undefined") {
+      const canvas = canvasRef.current;
+      canvas.width = window.innerWidth * dpr;
+      canvas.height = window.innerHeight * dpr;
+      context.current.scale(dpr, dpr);
+    }
+  };
+
+  const createParticles = () => {
+    if (typeof window !== "undefined") {
+      particles.current = [];
+      for (let i = 0; i < quantity; i++) {
+        particles.current.push({
+          x: Math.random() * window.innerWidth,
+          y: Math.random() * window.innerHeight,
+          size: Math.random() * 3 + 0.5,
+          speedX: Math.random() * 0.75 - 0.375,
+          speedY: Math.random() * 0.75 - 0.375,
+          color: hexToRgb(color),
+        });
+      }
+    }
+  };
+
+  const drawParticles = () => {
+    if (!context.current || typeof window === "undefined") return;
+    context.current.clearRect(0, 0, window.innerWidth * dpr, window.innerHeight * dpr);
+    particles.current.forEach((particle) => {
+      context.current.beginPath();
+      context.current.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+      context.current.fillStyle = `rgba(${particle.color[0]}, ${particle.color[1]}, ${particle.color[2]}, 0.5)`;
+      context.current.fill();
+      context.current.closePath();
+      particle.x += particle.speedX;
+      particle.y += particle.speedY;
+      if (particle.x < 0) particle.x = window.innerWidth;
+      if (particle.x > window.innerWidth) particle.x = 0;
+      if (particle.y < 0) particle.y = window.innerHeight;
+      if (particle.y > window.innerHeight) particle.y = 0;
+    });
+  };
+
+  const animate = () => {
+    drawParticles();
+    if (typeof window !== "undefined") {
+      window.requestAnimationFrame(animate);
+    }
+  };
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className={`${className} w-full h-full pointer-events-none absolute inset-0 z-0`}
+    />
+  );
+};
+
+export default Particles;
+```
+
+## Step 4: Add the Particles Component to the Homepage
+
+Modify `pages/index.js` to include the Particles component:
+
+```javascript
+import Particles from "../components/magicui/Particles";
+
+export default function Home() {
+  return (
+    <div className="relative min-h-screen flex flex-col bg-gradient-to-br from-purple-400 via-pink-500 to-red-500">
+      <Particles className="absolute inset-0" quantity={125} ease={50} color="#ffffff" />
+      <Navbar />
+      {/* Your existing homepage content */}
+      <Footer />
+    </div>
+  );
+}
+```
+
+## Configuration Options
+
+| Prop       | Description                                 | Default Value |
+|------------|---------------------------------------------|---------------|
+| `className` | Additional CSS classes                     | `""`           |
+| `quantity` | Number of particles                        | `125`         |
+| `ease`     | Animation ease factor                      | `50`          |
+| `color`    | Particle color in hex format              | `"#ffffff"`    |
+
+## Notes
+
+1. The particles are rendered using HTML5 Canvas for optimal performance.
+2. The component is responsive and will adjust to window resizing.
+3. Particles wrap around the screen edges for a continuous effect.
+4. The effect is purely decorative and doesn't interfere with user interactions.
+5. Device pixel ratio (DPR) is considered for crisp rendering on high-DPI displays.
+
+## Troubleshooting
+
+If the particles are not visible:
+- Ensure the container has a relative position.
+- Check that the z-index values are correct.
+- Verify that the container has a defined height.
+- Confirm that the color contrast is sufficient against the background.
+
+For best performance, adjust the quantity of particles based on the target device capabilities.
 

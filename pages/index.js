@@ -10,6 +10,9 @@ import { User } from '../components/User'
 import weatherConfigs from '../config/weather.json'
 import npcData from '../data/NPC.json'
 import { NPCController } from '../components/NPC'
+import { WeatherControls } from '../components/WeatherControls'
+import Head from 'next/head'
+import { AuroraText } from "@/components/ui/aurora-text"
 
 
 export default function Home() {
@@ -108,20 +111,10 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>Grand Theft Aptos - Game</title>
-        <meta name="description" content="Play Grand Theft Aptos - The AI-powered open world game" />
-        <link rel="icon" href="/favicon.ico" />
+        <title>Models</title>
+        <link rel="icon" type="image/png" href="/logo.png" />
       </Head>
-
-      {/* Add Landing Page Link */}
-      <Link 
-        href="/landingpage"
-        className="fixed top-4 right-4 z-50 bg-primary text-white px-4 py-2 rounded-full hover:bg-opacity-90 transition-all"
-      >
-<<<<<<< HEAD
-        View Landing Page
-      </Link>
-
+      
       <div className="w-full h-screen relative">
         <Canvas
           shadows
@@ -145,7 +138,18 @@ export default function Home() {
             />
             
             {characters.map(character => renderCharacter(character))}
-            <Environment weatherType="sunny" timeState={{ timeOfDay: 'day', dayProgress: 0.5 }} />
+
+            {playerCharacter && (
+              <User 
+                ref={userRef}
+                character={playerCharacter}
+              />
+            )}
+
+            <Environment 
+              weatherType={weather} 
+              timeState={timeState} 
+            />
             
             <OrbitControls
               target={[0, 0, 0]}
@@ -164,155 +168,109 @@ export default function Home() {
           </Suspense>
         </Canvas>
 
+        {/* Weather Controls */}
+        <WeatherControls
+          onWeatherChange={setWeather}
+          timeSimRef={timeSimRef}
+          currentWeather={weather}
+          currentTime={timeState.date}
+        />
+
+        <NPCController />
+
         {/* Top Bar Controls */}
         <div className="absolute top-4 left-4 flex gap-4">
+          {!playerCharacter && (
+            <button
+              onClick={() => setShowJoinModal(true)}
+              className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
+            >
+              Join Game
+            </button>
+          )}
           <button
             onClick={() => setShowCreateModal(true)}
             className="bg-green-500 text-white p-2 rounded hover:bg-green-600"
           >
-            Create Character
-          </button>
-          <button
-            onClick={() => setShowCharactersList(true)}
-            className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
-          >
-            Show Characters
+            Create NPC
           </button>
         </div>
 
         {/* Modals */}
+        {showJoinModal && (
+          <div className="fixed inset-0 flex items-center justify-center z-50">
+            <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setShowJoinModal(false)} />
+            <div className="bg-white p-6 rounded-lg shadow-xl relative z-10">
+              <h2 className="text-2xl mb-4">Join Game</h2>
+              <form onSubmit={(e) => {
+                e.preventDefault()
+                handleJoinGame({
+                  username: e.target.username.value,
+                  gender: e.target.gender.value
+                })
+              }}>
+                <input
+                  name="username"
+                  placeholder="Enter username"
+                  className="block w-full mb-4 p-2 border rounded"
+                  required
+                />
+                <select
+                  name="gender"
+                  className="block w-full mb-4 p-2 border rounded"
+                  required
+                >
+                  <option value="men">Male</option>
+                  <option value="women">Female</option>
+                </select>
+                <div className="flex gap-2">
+                  <button
+                    type="submit"
+                    className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                  >
+                    Join
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowJoinModal(false)}
+                    className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
         <CreateCharacterModal
           showModal={showCreateModal}
           onClose={() => setShowCreateModal(false)}
           onSubmit={handleCreateCharacter}
-          characterForm={characterForm}
-          setCharacterForm={setCharacterForm}
         />
 
-        <CharactersListModal
-          showModal={showCharactersList}
-          onClose={() => setShowCharactersList(false)}
-          characters={characters}
-        />
-
-        <CharacterControlTest characters={characters} />
+        <div className="container mx-auto px-4 pt-32 text-center">
+          <h1 className="text-6xl font-bold mb-8">
+            Where{" "}
+            <AuroraText 
+              style={{ "--color-1": "240 100% 60%", "--color-2": "280 100% 60%", "--color-4": "200 100% 60%" }}
+              className="font-bold"
+            >
+              AI
+            </AuroraText>
+            {" "}Meets{" "}
+            <AuroraText 
+              style={{ "--color-1": "0 100% 60%", "--color-2": "30 100% 60%", "--color-4": "345 100% 60%" }}
+              className="font-bold"
+            >
+              Chaos
+            </AuroraText>
+          </h1>
+          <h2 className="text-2xl text-gray-600 dark:text-gray-300 mb-12">
+            The first truly living open world
+          </h2>
+        </div>
       </div>
     </>
-=======
-        <color attach="background" args={['#87CEEB']} /> {/* Sunny sky blue */}
-        
-        <Suspense fallback={null}>
-          <ambientLight intensity={1} />
-          <directionalLight
-            position={[10, 10, 5]}
-            intensity={1.5}
-            castShadow
-            shadow-mapSize-width={2048}
-            shadow-mapSize-height={2048}
-          />
-          
-          {characters.map(character => renderCharacter(character))}
-
-          {playerCharacter && (
-            <User 
-              ref={userRef}
-              character={playerCharacter}
-            />
-          )}
-
-          <Environment weatherType="sunny" timeState={{ timeOfDay: 'day', dayProgress: 0.5 }} />
-          
-          <OrbitControls
-            target={[0, 0, 0]}
-            maxPolarAngle={Math.PI / 2.5}
-            minPolarAngle={Math.PI / 3}
-            maxAzimuthAngle={Math.PI / 2}
-            minAzimuthAngle={-Math.PI / 2}
-            enableZoom={true}
-            enablePan={true}
-            zoomSpeed={0.5}
-            minDistance={10}
-            maxDistance={50}
-          />
-          
-          <EnvironmentMap preset="sunset" />
-        </Suspense>
-      </Canvas>
-
-      <NPCController />
-
-      {/* Top Bar Controls */}
-      <div className="absolute top-4 left-4 flex gap-4">
-        {!playerCharacter && (
-          <button
-            onClick={() => setShowJoinModal(true)}
-            className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
-          >
-            Join Game
-          </button>
-        )}
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="bg-green-500 text-white p-2 rounded hover:bg-green-600"
-        >
-          Create NPC
-        </button>
-      </div>
-
-      {/* Modals */}
-      {showJoinModal && (
-        <div className="fixed inset-0 flex items-center justify-center z-50">
-          <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setShowJoinModal(false)} />
-          <div className="bg-white p-6 rounded-lg shadow-xl relative z-10">
-            <h2 className="text-2xl mb-4">Join Game</h2>
-            <form onSubmit={(e) => {
-              e.preventDefault()
-              handleJoinGame({
-                username: e.target.username.value,
-                gender: e.target.gender.value
-              })
-            }}>
-              <input
-                name="username"
-                placeholder="Enter username"
-                className="block w-full mb-4 p-2 border rounded"
-                required
-              />
-              <select
-                name="gender"
-                className="block w-full mb-4 p-2 border rounded"
-                required
-              >
-                <option value="men">Male</option>
-                <option value="women">Female</option>
-              </select>
-              <div className="flex gap-2">
-                <button
-                  type="submit"
-                  className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-                >
-                  Join
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowJoinModal(false)}
-                  className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      <CreateCharacterModal
-        showModal={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-        onSubmit={handleCreateCharacter}
-      />
-
-    </div>
->>>>>>> dda1567087773e703d5d710d999262f8c9cb6e47
   )
 }

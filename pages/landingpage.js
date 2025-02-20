@@ -1,8 +1,17 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import HeroSection from '@/components/sections/HeroSection';
+import { useTheme } from 'next-themes';
+import { Particles } from '@/components/ui/particles'; // Update this path based on where you saved the Particles component
 
 export default function LandingPage() {
+  const { resolvedTheme } = useTheme();
+  const [color, setColor] = useState('#ffffff');
+
+  useEffect(() => {
+    setColor(resolvedTheme === 'dark' ? '#ffffff' : '#000000');
+  }, [resolvedTheme]);
+
   return (
     <div className="relative min-h-screen flex flex-col bg-white">
       <Head>
@@ -14,6 +23,15 @@ export default function LandingPage() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
+      {/* Add Particles component */}
+      <Particles
+        className="absolute inset-0 z-0"
+        quantity={100}
+        ease={80}
+        color={color}
+        refresh={false}
+      />
+
       <main className="flex-grow relative z-10">
         <div className="relative">
           <HeroSection />
@@ -21,4 +39,4 @@ export default function LandingPage() {
       </main>
     </div>
   );
-} 
+}
