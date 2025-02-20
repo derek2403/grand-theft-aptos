@@ -12,6 +12,8 @@ import { NPCController } from '../components/NPC'
 import { WeatherControls } from '../components/WeatherControls'
 import { Phil } from '@/components/Phil'
 import { FaUserPlus, FaRobot } from 'react-icons/fa'
+import Head from 'next/head'
+import { AuroraText } from "@/components/ui/aurora-text"
 
 
 export default function Home() {
@@ -168,60 +170,168 @@ export default function Home() {
           <span>Create NPC</span>
         </button>
       </div>
+    <>
+      <Head>
+        <title>Models</title>
+        <link rel="icon" type="image/png" href="/logo.png" />
+      </Head>
+      
+      <div className="w-full h-screen relative">
+        <Canvas
+          shadows
+          camera={{
+            position: [20, 200, 20],
+            fov: 50,
+            near: 0.1,
+            far: 1000
+          }}
+        >
+          <color attach="background" args={['#87CEEB']} /> {/* Sunny sky blue */}
+          
+          <Suspense fallback={null}>
+            <ambientLight intensity={1} />
+            <directionalLight
+              position={[10, 10, 5]}
+              intensity={1.5}
+              castShadow
+              shadow-mapSize-width={2048}
+              shadow-mapSize-height={2048}
+            />
+            
+            {characters.map(character => renderCharacter(character))}
 
-      {/* Modals */}
-      {showJoinModal && (
-        <div className="fixed inset-0 flex items-center justify-center z-50">
-          <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setShowJoinModal(false)} />
-          <div className="bg-white p-6 rounded-lg shadow-xl relative z-10">
-            <h2 className="text-2xl mb-4">Join Game</h2>
-            <form onSubmit={(e) => {
-              e.preventDefault()
-              handleJoinGame({
-                username: e.target.username.value,
-                gender: e.target.gender.value
-              })
-            }}>
-              <input
-                name="username"
-                placeholder="Enter username"
-                className="block w-full mb-4 p-2 border rounded"
-                required
+            {playerCharacter && (
+              <User 
+                ref={userRef}
+                character={playerCharacter}
               />
-              <select
-                name="gender"
-                className="block w-full mb-4 p-2 border rounded"
-                required
-              >
-                <option value="men">Male</option>
-                <option value="women">Female</option>
-              </select>
-              <div className="flex gap-2">
-                <button
-                  type="submit"
-                  className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-                >
-                  Join
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowJoinModal(false)}
-                  className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </div>
+            )}
+
+            <Environment 
+              weatherType={weather} 
+              timeState={timeState} 
+            />
+            
+            <OrbitControls
+              target={[0, 0, 0]}
+              maxPolarAngle={Math.PI / 2.5}
+              minPolarAngle={Math.PI / 3}
+              maxAzimuthAngle={Math.PI / 2}
+              minAzimuthAngle={-Math.PI / 2}
+              enableZoom={true}
+              enablePan={true}
+              zoomSpeed={0.5}
+              minDistance={10}
+              maxDistance={50}
+            />
+            
+            <EnvironmentMap preset="sunset" />
+          </Suspense>
+        </Canvas>
+
+        {/* Weather Controls */}
+        <WeatherControls
+          onWeatherChange={setWeather}
+          timeSimRef={timeSimRef}
+          currentWeather={weather}
+          currentTime={timeState.date}
+        />
+
+        <NPCController />
+
+        {/* Top Bar Controls */}
+        <div className="absolute top-4 left-4 flex gap-4">
+          {!playerCharacter && (
+            <button
+              onClick={() => setShowJoinModal(true)}
+              className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
+            >
+              Join Game
+            </button>
+          )}
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="bg-green-500 text-white p-2 rounded hover:bg-green-600"
+          >
+            Create NPC
+          </button>
         </div>
-      )}
 
-      <CreateCharacterModal
-        showModal={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-        onSubmit={handleCreateCharacter}
-      />
+        {/* Modals */}
+        {showJoinModal && (
+          <div className="fixed inset-0 flex items-center justify-center z-50">
+            <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setShowJoinModal(false)} />
+            <div className="bg-white p-6 rounded-lg shadow-xl relative z-10">
+              <h2 className="text-2xl mb-4">Join Game</h2>
+              <form onSubmit={(e) => {
+                e.preventDefault()
+                handleJoinGame({
+                  username: e.target.username.value,
+                  gender: e.target.gender.value
+                })
+              }}>
+                <input
+                  name="username"
+                  placeholder="Enter username"
+                  className="block w-full mb-4 p-2 border rounded"
+                  required
+                />
+                <select
+                  name="gender"
+                  className="block w-full mb-4 p-2 border rounded"
+                  required
+                >
+                  <option value="men">Male</option>
+                  <option value="women">Female</option>
+                </select>
+                <div className="flex gap-2">
+                  <button
+                    type="submit"
+                    className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                  >
+                    Join
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowJoinModal(false)}
+                    className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
 
-    </div>
+        <CreateCharacterModal
+          showModal={showCreateModal}
+          onClose={() => setShowCreateModal(false)}
+          onSubmit={handleCreateCharacter}
+        />
+
+        <div className="container mx-auto px-4 pt-32 text-center">
+          <h1 className="text-6xl font-bold mb-8">
+            Where{" "}
+            <AuroraText 
+              style={{ "--color-1": "240 100% 60%", "--color-2": "280 100% 60%", "--color-4": "200 100% 60%" }}
+              className="font-bold"
+            >
+              AI
+            </AuroraText>
+            {" "}Meets{" "}
+            <AuroraText 
+              style={{ "--color-1": "0 100% 60%", "--color-2": "30 100% 60%", "--color-4": "345 100% 60%" }}
+              className="font-bold"
+            >
+              Chaos
+            </AuroraText>
+          </h1>
+          <h2 className="text-2xl text-gray-600 dark:text-gray-300 mb-12">
+            The first truly living open world
+          </h2>
+        </div>
+      </div>
+    </>
   )
 }
