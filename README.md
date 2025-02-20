@@ -5,6 +5,9 @@
 
 An open-world, AI agent-driven playground that merges dynamic NPCs and real-world-like blockchain economics. Generate unique NPCs from real-world Twitter profiles, interact with them, and watch them live out their own stories with daily randomized on-chain events. Just log in, describe the NPC you want, and play with them on the Aptos blockchain!
 
+Slides: https://www.canva.com/design/DAGfmUebClc/BekikP9GLokf61chNI8VOw
+Video: https://drive.google.com/drive/folders/10BCjGpaMxnGyk5lWDPVbuN-chXbmFBDA?dmr=1&ec=wgc-drive-globalnav-goto
+
 ---
 
 ## Inspiration: How We Came Up with This Idea
