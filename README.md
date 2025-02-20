@@ -2,6 +2,8 @@
 **Grand Theft Aptos: Where AI-driven NPCs meet on-chain interactions in a fast, immersive open-world experience powered by Aptos Blockchain**
 
 ![Logo](public/logo.png)
+![Image](public/pics/landingpage.png)
+![Image](public/pics/map.png)
 
 An open-world, AI agent-driven playground that merges dynamic NPCs and real-world-like blockchain economics. Generate unique NPCs from real-world Twitter profiles, interact with them, and watch them live out their own stories with daily randomized on-chain events. Just log in, describe the NPC you want, and play with them on the Aptos blockchain!
 
@@ -51,10 +53,14 @@ By merging **AI agents** and **Aptos** blockchain infrastructure, we’re able t
 1. **User Login**
    - Sign in with Google/Apple for quick access via Aptos Login.
    - All gas fees are sponsored, ensuring a seamless experience.
+  
+     ![Image](public/pics/joingame.png)
 
 2. **Twitter Handle Scrape**
    - User enters a Twitter handle in the game.
    - The AI system scrapes the user’s public data (tweets, profile info, etc.).
+
+    ![Image](public/pics/import.png)
 
 3. **NPC Generation & AI Agent Creation**
    - Our AI engine analyzes the scraped data to craft an NPC with matching personality traits, occupation, and communication style.
@@ -63,6 +69,9 @@ By merging **AI agents** and **Aptos** blockchain infrastructure, we’re able t
 4. **In-Game Interactions**
    - Real-time conversations with NPCs are powered by large language models.
    - NPCs mimic real-world speech patterns or interests, creating a dynamic experience.
+     
+  ![Image](public/pics/chat.png)
+     
 
 5. **On-Chain Transactions**
    - Buy Da Vinci’s NFT artwork or tip IU for a performance—all transactions flow through Aptos.
@@ -112,14 +121,17 @@ By merging **AI agents** and **Aptos** blockchain infrastructure, we’re able t
 
 3. **On-Chain Randomness**  
    We leverage Aptos’s built-in randomization functions to simulate real-world economic fluctuations—some NPCs gain wealth while others lose it, adding constant unpredictability.
+   ![Image](public/pics/randomevents.png)
 
-4. **Sponsored Transaction**  
+5. **Sponsored Transaction**  
    Aptos lowers entry barriers for players unfamiliar with crypto by enabling gas-free transactions. This eliminates the need for manual wallet setups, making it ideal for mass adoption in gaming.
 
-5. **Aptos Connect**  
+6. **Aptos Connect**  
    Players can easily create a wallet by logging in with Google or Apple, significantly lowering the entry barrier for new users.
+   ![Aptos Connect](public/pics/aptosconnect.png)
+   ![Aptos Connect](public/pics/aptosconnect2.png)
 
-6. **High Throughput & Fast Finality**  
+7. **High Throughput & Fast Finality**  
    Aptos ensures rapid transaction processing and near-instant finality—crucial for real-time gameplay interactions and a smooth gaming experience. The seamless integration is so fluid that users don’t even realize they’re interacting with a blockchain.
 
 ---
@@ -139,8 +151,6 @@ By merging **AI agents** and **Aptos** blockchain infrastructure, we’re able t
    Grow the game world into a vast, ever-expanding environment, with new cities, biomes, and interactive zones unlocking over time. This allows for more exploration, player-driven economies, and emergent gameplay.
 
 ---
-## Screenshot
 
----
 
 *Thank you for checking out Grand Theft Aptos! Feel free to contribute, open issues, or provide feedback. We’re excited to keep expanding this project and shaping the future of AI-driven, blockchain-powered gaming.*
